@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3556713788542025" crossorigin="anonymous"></script>
 
     <title>LitePedia</title>
@@ -14,29 +13,19 @@
         
         .container { width: 100%; max-width: 800px; padding: 2rem; }
         
-        /* Portal View */
         #home-view { text-align: center; margin-top: 50px; }
         .wiki-header h1 { font-family: 'Playfair Display', serif; font-size: 60px; text-transform: uppercase; margin: 0; font-weight: 400; }
         .wiki-header p { font-style: italic; color: var(--text-grey); margin-bottom: 30px; }
         
-        /* Search Wrapper (Fixed alignment) */
         .search-wrapper { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            align-items: flex-end; 
-            gap: 15px; 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 8px;
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; 
+            gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px;
         }
         .input-group { display: flex; flex-direction: column; align-items: flex-start; }
         #search-input { width: 300px; padding: 10px; border: 1px solid #a2a9b1; }
         select { padding: 8px; border: 1px solid #a2a9b1; cursor: pointer; }
         button { background: #e8ecef; border: 1px solid #a2a9b1; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #dcdfe2; }
 
-        /* Reader View */
         #reader-view { display: none; text-align: left; }
         .back-btn { margin-bottom: 20px; color: var(--link-blue); cursor: pointer; font-size: 14px; }
         #ai-summary { font-size: 18px; line-height: 1.6; color: #202122; white-space: pre-wrap; }
@@ -88,23 +77,22 @@
 </div>
 
 <script>
-    // Permitir buscar al presionar "Enter"
-    document.getElementById("search-input").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            executeSearch();
-        }
-    });
+    // Mapa de idiomas para asegurar que la IA entienda el destino
+    const langNames = { "en": "English", "es": "Spanish", "ca": "Catalan", "fr": "French" };
+
+    document.getElementById("search-input").addEventListener("keypress", (e) => { if (e.key === "Enter") executeSearch(); });
 
     async function executeSearch() {
         const query = document.getElementById('search-input').value.trim();
         const sourceLang = document.getElementById('source-lang-select').value;
         const outputLang = document.getElementById('output-lang-select').value;
+        const outputLangName = langNames[outputLang]; // Convertimos 'es' -> 'Spanish'
 
         if (!query) return;
 
         document.getElementById('home-view').style.display = 'none';
         document.getElementById('reader-view').style.display = 'block';
-        document.getElementById('ai-summary').innerText = "Consultando Wikipedia en " + sourceLang + "...";
+        document.getElementById('ai-summary').innerText = "Consultando Wikipedia...";
 
         try {
             const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
@@ -115,10 +103,10 @@
             const pages = Object.values(data.query.pages);
             const page = pages[0];
             
-            if (!page.extract) throw new Error("No hay suficiente información en esta página.");
+            if (!page.extract) throw new Error("No hay contenido suficiente.");
             
             document.getElementById('article-title').innerText = page.title;
-            document.getElementById('ai-summary').innerText = "Resumiendo con IA (en " + outputLang + ")...";
+            document.getElementById('ai-summary').innerText = `Traduciendo y resumiendo a ${outputLangName}...`;
 
             const aiRes = await fetch("/api/proxy", {
                 method: "POST",
@@ -128,11 +116,11 @@
                     "messages": [
                         {
                             "role": "system", 
-                            "content": "Actúa estrictamente como un redactor de enciclopedia profesional. Tu única función es generar el contenido del artículo. No ofrezcas opciones, no saludes, ni añadas introducciones o explicaciones. Sé objetivo, académico y utiliza Markdown limpio."
+                            "content": "Eres un traductor y redactor de enciclopedia experto. Tu tarea es traducir y resumir el texto proporcionado. Responde siempre y exclusivamente en el idioma solicitado."
                         },
                         {
                             "role": "user", 
-                            "content": `Resume el siguiente texto de Wikipedia en ${outputLang} de forma profesional, estructurada y sin relleno:\n\n${page.extract.substring(0, 3000)}`
+                            "content": `Traduce el siguiente texto de Wikipedia al idioma ${outputLangName} y haz un resumen profesional, estructurado y académico. No añadas introducciones.\n\nTexto:\n${page.extract.substring(0, 3000)}`
                         }
                     ]
                 })
@@ -140,10 +128,10 @@
 
             const aiData = await aiRes.json();
             
-            if (aiData.choices && aiData.choices[0] && aiData.choices[0].message) {
+            if (aiData.choices && aiData.choices[0]) {
                 document.getElementById('ai-summary').innerText = aiData.choices[0].message.content;
             } else {
-                throw new Error("La IA no respondió correctamente.");
+                throw new Error("La IA no respondió.");
             }
 
         } catch (e) {
