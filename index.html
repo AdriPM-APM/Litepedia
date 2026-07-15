@@ -3,108 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <title>LitePedia</title>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3556713788542025" crossorigin="anonymous"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+        :root { --bg: #ffffff; --text: #202122; --border: #a2a9b1; --hover: #f0f0f0; }
+        body.dark-mode { --bg: #121212; --text: #e0e0e0; --border: #444; --hover: #2a2a2a; }
         
-        /* Definición de Colores (Temas) */
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #202122;
-            --header-bg: #f8f9fa;
-            --border-color: #a2a9b1;
-            --link-blue: #3366cc;
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; }
+        
+        /* Contenedor de búsqueda */
+        .search-box { position: relative; width: 100%; }
+        #search-input { width: 100%; padding: 12px; border: 1px solid var(--border); box-sizing: border-box; }
+        
+        /* Dropdown Estilo Wikipedia */
+        #results-dropdown { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: var(--bg); border: 1px solid var(--border); 
+            z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            display: none; max-height: 400px; overflow-y: auto;
         }
-
-        body.dark-mode {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --header-bg: #1e1e1e;
-            --border-color: #444;
-            --link-blue: #6699ff;
+        .result-item { 
+            display: flex; align-items: center; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border); 
         }
-
-        body { 
-            font-family: 'Linux Libertine', 'Georgia', serif; 
-            background: var(--bg-color); 
-            color: var(--text-color);
-            margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-            transition: background 0.3s, color 0.3s;
-        }
+        .result-item:hover { background: var(--hover); }
+        .result-item img { width: 50px; height: 50px; object-fit: cover; margin-right: 15px; }
+        .result-text h4 { margin: 0; font-size: 16px; }
+        .result-text p { margin: 5px 0 0; font-size: 12px; color: #666; }
         
-        .container { width: 100%; max-width: 800px; padding: 2rem; }
-        
-        /* Tema y Controles */
-        .theme-toggle { position: absolute; top: 20px; right: 20px; cursor: pointer; padding: 5px 10px; background: var(--header-bg); border: 1px solid var(--border-color); color: var(--text-color); }
-
-        #home-view { text-align: center; margin-top: 50px; }
-        .wiki-header h1 { font-family: 'Playfair Display', serif; font-size: 60px; text-transform: uppercase; margin: 0; }
-        
-        .search-wrapper { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: var(--header-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
-        
-        input, select, button { background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px; }
-        button { cursor: pointer; }
-
-        /* Anuncio Posicionado (Esquina inferior derecha) */
-        .ad-container { position: fixed; bottom: 20px; right: 20px; width: 300px; z-index: 1000; }
-
-        #reader-view { display: none; text-align: left; }
-        .back-btn { margin-bottom: 20px; color: var(--link-blue); cursor: pointer; }
-        #ai-summary { font-size: 18px; line-height: 1.6; white-space: pre-wrap; }
+        .ad-container { position: fixed; bottom: 20px; right: 20px; width: 300px; }
     </style>
 </head>
 <body>
 
-<button class="theme-toggle" onclick="toggleTheme()">🌓 Modo Oscuro/Claro</button>
-
 <div class="container">
-    <div id="home-view">
-        <div class="wiki-header">
-            <h1>LITEPEDIA</h1>
-            <p>L’enciclopèdia lliure i resumida per IA</p>
-        </div>
-
-        <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="Buscar artículo...">
-            <select id="source-lang-select"><option value="en">English</option><option value="es" selected>Español</option></select>
-            <select id="output-lang-select"><option value="en">English</option><option value="es" selected>Español</option></select>
-            <button onclick="executeSearch()">Search</button>
-        </div>
-    </div>
-
-    <div id="reader-view">
-        <div class="back-btn" onclick="goHome()">← Volver</div>
-        <h1 id="article-title"></h1>
-        <div id="ai-summary">Analizando...</div>
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Buscar en Wikipedia..." autocomplete="off">
+        <div id="results-dropdown"></div>
     </div>
 </div>
 
-<!-- Posicionamiento del Anuncio -->
 <div class="ad-container">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3556713788542025" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3556713788542025" data-ad-slot="2168826316" data-ad-format="auto" data-full-width-responsive="true"></ins>
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3556713788542025" data-ad-slot="2168826316" data-ad-format="auto"></ins>
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 <script>
-    // Lógica del Tema
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    const input = document.getElementById('search-input');
+    const dropdown = document.getElementById('results-dropdown');
+    let timeout = null;
+
+    input.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const query = input.value.trim();
+            if (query.length > 2) fetchWikipedia(query);
+            else dropdown.style.display = 'none';
+        }, 300); // Debounce: espera 300ms antes de buscar
+    });
+
+    async function fetchWikipedia(query) {
+        // API: Busca por prefijo, obtiene imagen y descripción
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=prefixsearch&gpssearch=${encodeURIComponent(query)}&prop=pageimages|description&piprop=thumbnail&pithumbsize=50&pilimit=5&format=json&origin=*`;
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            renderResults(data.query ? data.query.pages : []);
+        } catch (e) { console.error(e); }
     }
 
-    // Cargar preferencia al iniciar
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
+    function renderResults(pages) {
+        dropdown.innerHTML = '';
+        if (Object.keys(pages).length === 0) { dropdown.style.display = 'none'; return; }
+
+        Object.values(pages).forEach(page => {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            const img = page.thumbnail ? page.thumbnail.source : 'https://upload.wikimedia.org/wikipedia/commons/8/80/Wikipedia-logo-v2.svg';
+            
+            div.innerHTML = `
+                <img src="${img}" alt="thumb">
+                <div class="result-text">
+                    <h4>${page.title}</h4>
+                    <p>${page.description || 'Sin descripción disponible'}</p>
+                </div>
+            `;
+            div.onclick = () => { input.value = page.title; dropdown.style.display = 'none'; };
+            dropdown.appendChild(div);
+        });
+        dropdown.style.display = 'block';
     }
 
-    // Función de búsqueda (se mantiene igual)
-    async function executeSearch() {
-        // ... (Tu código de búsqueda previo aquí)
-        // He omitido la lógica interior para abreviar, mantén la que ya tenías que funcionaba bien
-    }
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', (e) => { if (!e.target.closest('.search-box')) dropdown.style.display = 'none'; });
 </script>
+
 </body>
 </html>
