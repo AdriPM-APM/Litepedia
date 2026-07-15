@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>LitePedia - AI Wikipedia</title>
     <style>
-        /* Variables de color para Modo Oscuro/Claro */
         :root {
             --bg-color: #ffffff;
             --text-color: #202122;
@@ -26,22 +25,36 @@
             margin: 0; padding: 20px; transition: background 0.3s;
         }
 
-        /* Botón de Modo Oscuro */
-        .theme-toggle { position: absolute; top: 10px; right: 10px; cursor: pointer; padding: 8px; border: 1px solid var(--border-color); background: var(--header-bg); color: var(--text-color); }
+        /* Botón de Modo */
+        .theme-toggle { position: fixed; top: 10px; right: 10px; cursor: pointer; padding: 8px; border: 1px solid var(--border-color); background: var(--header-bg); color: var(--text-color); z-index: 2000; }
 
-        /* Contenedor de Búsqueda */
-        .search-section { border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; background: var(--header-bg); max-width: 800px; margin: 40px auto; display: flex; align-items: flex-end; gap: 15px; justify-content: center; }
+        /* Contenedor de Búsqueda Optimizado */
+        .search-section { 
+            border: 1px solid var(--border-color); 
+            padding: 25px; 
+            border-radius: 12px; 
+            background: var(--header-bg); 
+            max-width: 900px; 
+            margin: 60px auto 20px auto; 
+            display: flex; 
+            flex-wrap: wrap; /* Esto evita que los elementos desaparezcan */
+            align-items: flex-end; 
+            gap: 20px; 
+            justify-content: center; 
+        }
         
-        .field { display: flex; flex-direction: column; gap: 5px; }
-        .field label { font-size: 11px; font-weight: bold; }
+        .field { display: flex; flex-direction: column; gap: 8px; min-width: 150px; }
+        .field label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--text-color); opacity: 0.8; }
         
-        #search-input, select, button { padding: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
-        button { cursor: pointer; font-weight: bold; background: #e8ecef; }
+        #search-input { padding: 10px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); flex-grow: 1; min-width: 200px; }
+        select { padding: 10px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); cursor: pointer; }
         
-        /* Resultados */
-        #result-display { max-width: 800px; margin: 20px auto; line-height: 1.6; white-space: pre-wrap; }
+        button { padding: 10px 25px; border: 1px solid var(--border-color); background: #e8ecef; color: #202122; cursor: pointer; font-weight: bold; }
+        button:hover { background: #dcdcdc; }
 
-        /* Anuncio (Esquina inferior derecha) */
+        #result-display { max-width: 800px; margin: 20px auto; line-height: 1.6; white-space: pre-wrap; font-size: 16px; }
+
+        /* Anuncio */
         .ad-container { position: fixed; bottom: 20px; right: 20px; width: 300px; z-index: 1000; }
     </style>
 </head>
@@ -50,7 +63,7 @@
 <button class="theme-toggle" onclick="toggleTheme()">🌓 Modo Oscuro/Claro</button>
 
 <div class="search-section">
-    <div class="field">
+    <div class="field" style="flex-grow: 2;">
         <label>BÚSQUEDA</label>
         <input type="text" id="search-input" placeholder="Buscar artículo...">
     </div>
@@ -80,7 +93,6 @@
 
 <div id="result-display" style="text-align: center; color: var(--text-color);"></div>
 
-<!-- Anuncio -->
 <div class="ad-container">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3556713788542025" crossorigin="anonymous"></script>
     <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3556713788542025" data-ad-slot="2168826316" data-ad-format="auto" data-full-width-responsive="true"></ins>
@@ -88,17 +100,14 @@
 </div>
 
 <script>
-    // Mapa de nombres para la IA
     const langNames = { "en": "English", "es": "Spanish", "ca": "Catalan", "fr": "French" };
 
-    // Función de Modo Oscuro
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
     }
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
-    // Función Principal de Búsqueda
     async function executeSearch() {
         const query = document.getElementById('search-input').value.trim();
         const sourceLang = document.getElementById('source-lang-select').value;
@@ -106,19 +115,21 @@
         const outputLangName = langNames[outputLang];
         const display = document.getElementById('result-display');
 
-        if (!query) return alert("Escribe algo para buscar");
+        if (!query) return alert("Por favor, introduce un término de búsqueda.");
 
-        display.innerText = "Consultando Wikipedia y traduciendo...";
+        display.innerText = "Consultando Wikipedia...";
 
         try {
             const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
             const res = await fetch(url);
             const data = await res.json();
             
+            if (!data.query || !data.query.pages) throw new Error("No se encontraron resultados.");
             const page = Object.values(data.query.pages)[0];
-            if (!page.extract) throw new Error("No se encontró el artículo.");
+            if (!page.extract) throw new Error("No hay contenido disponible.");
 
-            // Petición al Proxy
+            display.innerText = "Traduciendo con IA...";
+
             const aiRes = await fetch("/api/proxy", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -126,14 +137,18 @@
                     "model": "google/gemma-4-26b-a4b-it:free",
                     "temperature": 0.3,
                     "messages": [
-                        { "role": "system", "content": `Eres un traductor experto. Responde 100% en ${outputLangName}.` },
-                        { "role": "user", "content": `Resume esto en ${outputLangName}:\n\n${page.extract.substring(0, 3000)}` }
+                        { "role": "system", "content": `Eres un traductor experto. Responde siempre en ${outputLangName}.` },
+                        { "role": "user", "content": `Resume el siguiente texto en ${outputLangName}:\n\n${page.extract.substring(0, 3000)}` }
                     ]
                 })
             });
 
             const aiData = await aiRes.json();
-            display.innerText = aiData.choices[0].message.content;
+            if (aiData.choices && aiData.choices[0]) {
+                display.innerText = aiData.choices[0].message.content;
+            } else {
+                display.innerText = "Error en la respuesta de la IA.";
+            }
 
         } catch (e) {
             display.innerText = "Error: " + e.message;
