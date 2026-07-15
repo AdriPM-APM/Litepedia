@@ -84,54 +84,57 @@
 
 <script>
     // Robust Error Handling logic
-    async function executeSearch() {
-        const query = document.getElementById('search-input').value.trim();
-        const lang = document.getElementById('lang-select').value;
-        if (!query) return;
+   async function executeSearch() {
+    const query = document.getElementById('search-input').value.trim();
+    // Get values from the two separate dropdowns
+    const sourceLang = document.getElementById('source-lang-select').value;
+    const outputLang = document.getElementById('output-lang-select').value;
 
-        document.getElementById('home-view').style.display = 'none';
-        document.getElementById('reader-view').style.display = 'block';
-        document.getElementById('ai-summary').innerText = "Analyzing...";
+    if (!query) return;
 
-        try {
-            const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
-            const response = await fetch(url);
-            const data = await response.json();
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('reader-view').style.display = 'block';
+    document.getElementById('ai-summary').innerText = "Analyzing...";
 
-            // FIX: Robust check to prevent "reading '0'" error
-            if (!data.query || !data.query.pages) throw new Error("Article not found.");
-            const pages = Object.values(data.query.pages);
-            if (pages.length === 0 || pages[0].pageid === undefined) throw new Error("Article does not exist.");
-            
-            const page = pages[0];
-            document.getElementById('article-title').innerText = page.title;
+    try {
+        // Use sourceLang for the Wikipedia URL
+        const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-            // Proxy to your Python backend
-            const aiRes = await fetch("/api/proxy", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "model": "google/gemma-4-26b-a4b-it:free",
-                    "messages": [
-                        {
-                            "role": "system", 
-                            "content": "Actúa estrictamente como un redactor de enciclopedia profesional. Tu única función es generar el contenido del artículo. No ofrezcas opciones, no saludes, ni añadas introducciones o explicaciones. Sé objetivo, académico y utiliza Markdown limpio."
-                        },
-                        {
-                            "role": "user", 
-                            "content": `Resume el siguiente texto de Wikipedia en ${lang} de forma profesional, estructurada y sin relleno:\n\n${page.extract.substring(0, 3000)}`
-                        }
-                    ]
-                })
-            });
+        if (!data.query || !data.query.pages) throw new Error("Article not found.");
+        const pages = Object.values(data.query.pages);
+        if (pages.length === 0 || pages[0].pageid === undefined) throw new Error("Article does not exist.");
+        
+        const page = pages[0];
+        document.getElementById('article-title').innerText = page.title;
 
-            const aiData = await aiRes.json();
-            document.getElementById('ai-summary').innerText = aiData.choices[0].message.content;
-        } catch (e) {
-            alert("Error: " + e.message);
-            goHome();
-        }
+        // Use outputLang in the AI Prompt
+        const aiRes = await fetch("/api/proxy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                "model": "google/gemma-4-26b-a4b-it:free",
+                "messages": [
+                    {
+                        "role": "system", 
+                        "content": "Actúa estrictamente como un redactor de enciclopedia profesional. Tu única función es generar el contenido del artículo. No ofrezcas opciones, no saludes, ni añadas introducciones o explicaciones. Sé objetivo, académico y utiliza Markdown limpio."
+                    },
+                    {
+                        "role": "user", 
+                        "content": `Resume el siguiente texto de Wikipedia en ${outputLang} de forma profesional, estructurada y sin relleno:\n\n${page.extract.substring(0, 3000)}`
+                    }
+                ]
+            })
+        });
+
+        const aiData = await aiRes.json();
+        document.getElementById('ai-summary').innerText = aiData.choices[0].message.content;
+    } catch (e) {
+        alert("Error: " + e.message);
+        goHome();
     }
+}
 
     function goHome() {
         document.getElementById('home-view').style.display = 'block';
