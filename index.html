@@ -93,7 +93,7 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    "model": "google/gemma-2-9b-it:free",
+                    "model": "google/gemma-4-26b-a4b-it:free",
                     "messages": [{"role": "user", "content": `Summarize this in ${lang} professionally:\n\n${page.extract.substring(0, 3000)}`}]
                 })
             });
