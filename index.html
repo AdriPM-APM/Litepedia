@@ -49,17 +49,31 @@
             <!-- Languages will be generated here -->
         </div>
 
-        <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="Search...">
-            <select id="lang-select">
-                <option value="en">English</option>
-                <option value="es" selected>Español</option>
-                <option value="ca">Català</option>
-                <option value="fr">Français</option>
-            </select>
-            <button onclick="executeSearch()">Search</button>
-        </div>
+       <div class="search-wrapper">
+    <input type="text" id="search-input" placeholder="Search...">
+    
+    <div>
+        <label style="font-size: 12px; display: block;">Source Wikipedia:</label>
+        <select id="source-lang-select">
+            <option value="en" selected>English</option>
+            <option value="es">Español</option>
+            <option value="ca">Català</option>
+            <option value="fr">Français</option>
+        </select>
     </div>
+
+    <div>
+        <label style="font-size: 12px; display: block;">Output Language:</label>
+        <select id="output-lang-select">
+            <option value="en">English</option>
+            <option value="es" selected>Español</option>
+            <option value="ca">Català</option>
+            <option value="fr">Français</option>
+        </select>
+    </div>
+
+    <button onclick="executeSearch()">Search</button>
+</div>
 
     <div id="reader-view">
         <div class="back-btn" onclick="goHome()">← Back to Portal</div>
