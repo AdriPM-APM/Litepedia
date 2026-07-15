@@ -1,94 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>LitePedia</title>
+    <title>LitePedia - AI Wikipedia</title>
     <style>
-        :root { --bg: #ffffff; --text: #202122; --border: #a2a9b1; --header: #f8f9fa; }
-        body.dark-mode { --bg: #121212; --text: #e0e0e0; --border: #444; --header: #1e1e1e; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        /* Variables de color para Modo Oscuro/Claro */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #202122;
+            --header-bg: #f8f9fa;
+            --border-color: #a2a9b1;
+            --link-blue: #3366cc;
+        }
 
-        /* Search Section */
-        .search-container { border: 1px solid var(--border); padding: 20px; border-radius: 8px; background: var(--header); display: flex; align-items: flex-end; gap: 15px; justify-content: center; }
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --header-bg: #1e1e1e;
+            --border-color: #444;
+            --link-blue: #6699ff;
+        }
+
+        body { 
+            font-family: sans-serif; background: var(--bg-color); color: var(--text-color); 
+            margin: 0; padding: 20px; transition: background 0.3s;
+        }
+
+        /* Botón de Modo Oscuro */
+        .theme-toggle { position: absolute; top: 10px; right: 10px; cursor: pointer; padding: 8px; border: 1px solid var(--border-color); background: var(--header-bg); color: var(--text-color); }
+
+        /* Contenedor de Búsqueda */
+        .search-section { border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; background: var(--header-bg); max-width: 800px; margin: 40px auto; display: flex; align-items: flex-end; gap: 15px; justify-content: center; }
+        
         .field { display: flex; flex-direction: column; gap: 5px; }
-        .field label { font-size: 12px; font-weight: bold; }
+        .field label { font-size: 11px; font-weight: bold; }
         
-        #search-input, select, button { padding: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-        button { cursor: pointer; background: #e8ecef; }
+        #search-input, select, button { padding: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
+        button { cursor: pointer; font-weight: bold; background: #e8ecef; }
         
-        .ad-container { position: fixed; bottom: 20px; right: 20px; width: 300px; }
+        /* Resultados */
+        #result-display { max-width: 800px; margin: 20px auto; line-height: 1.6; white-space: pre-wrap; }
+
+        /* Anuncio (Esquina inferior derecha) */
+        .ad-container { position: fixed; bottom: 20px; right: 20px; width: 300px; z-index: 1000; }
     </style>
 </head>
 <body>
 
-<div class="search-container">
+<button class="theme-toggle" onclick="toggleTheme()">🌓 Modo Oscuro/Claro</button>
+
+<div class="search-section">
     <div class="field">
-        <label>Search</label>
+        <label>BÚSQUEDA</label>
         <input type="text" id="search-input" placeholder="Buscar artículo...">
     </div>
     
     <div class="field">
-        <label>Source Wikipedia</label>
+        <label>SOURCE WIKIPEDIA</label>
         <select id="source-lang-select">
             <option value="en" selected>English</option>
             <option value="es">Español</option>
             <option value="ca">Català</option>
+            <option value="fr">Français</option>
         </select>
     </div>
 
     <div class="field">
-        <label>Output Language</label>
+        <label>OUTPUT LANGUAGE</label>
         <select id="output-lang-select">
             <option value="en">English</option>
             <option value="es" selected>Español</option>
             <option value="ca">Català</option>
+            <option value="fr">Français</option>
         </select>
     </div>
 
     <button onclick="executeSearch()">Search</button>
 </div>
 
-<!-- AI Result Placeholder -->
-<div id="result-display" style="margin-top: 20px;"></div>
+<div id="result-display" style="text-align: center; color: var(--text-color);"></div>
 
-<!-- Ad Placeholder -->
+<!-- Anuncio -->
 <div class="ad-container">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3556713788542025" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3556713788542025" data-ad-slot="2168826316" data-ad-format="auto"></ins>
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3556713788542025" data-ad-slot="2168826316" data-ad-format="auto" data-full-width-responsive="true"></ins>
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 <script>
+    // Mapa de nombres para la IA
+    const langNames = { "en": "English", "es": "Spanish", "ca": "Catalan", "fr": "French" };
+
+    // Función de Modo Oscuro
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    }
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+
+    // Función Principal de Búsqueda
     async function executeSearch() {
-        const query = document.getElementById('search-input').value;
-        const source = document.getElementById('source-lang-select').value;
-        const target = document.getElementById('output-lang-select').value;
+        const query = document.getElementById('search-input').value.trim();
+        const sourceLang = document.getElementById('source-lang-select').value;
+        const outputLang = document.getElementById('output-lang-select').value;
+        const outputLangName = langNames[outputLang];
         const display = document.getElementById('result-display');
 
-        if (!query) return alert("Please enter a search term");
+        if (!query) return alert("Escribe algo para buscar");
 
-        display.innerText = "Searching and loading AI...";
+        display.innerText = "Consultando Wikipedia y traduciendo...";
 
         try {
-            // 1. Fetch Wikipedia
-            const wikiUrl = `https://${source}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
-            const wikiRes = await fetch(wikiUrl);
-            const wikiData = await wikiRes.json();
-            const page = Object.values(wikiData.query.pages)[0];
+            const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
+            const res = await fetch(url);
+            const data = await res.json();
             
-            if (!page.extract) throw new Error("No content found");
+            const page = Object.values(data.query.pages)[0];
+            if (!page.extract) throw new Error("No se encontró el artículo.");
 
-            display.innerText = "AI is summarizing...";
-
-            // 2. Fetch AI (This is where your proxy call goes)
+            // Petición al Proxy
             const aiRes = await fetch("/api/proxy", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "google/gemma-4-26b-a4b-it:free",
-                    messages: [
-                        { role: "system", content: `Translate and summarize into ${target}.` },
-                        { role: "user", content: page.extract.substring(0, 2000) }
+                    "model": "google/gemma-4-26b-a4b-it:free",
+                    "temperature": 0.3,
+                    "messages": [
+                        { "role": "system", "content": `Eres un traductor experto. Responde 100% en ${outputLangName}.` },
+                        { "role": "user", "content": `Resume esto en ${outputLangName}:\n\n${page.extract.substring(0, 3000)}` }
                     ]
                 })
             });
@@ -96,11 +135,10 @@
             const aiData = await aiRes.json();
             display.innerText = aiData.choices[0].message.content;
 
-        } catch (err) {
-            display.innerText = "Error: " + err.message;
+        } catch (e) {
+            display.innerText = "Error: " + e.message;
         }
     }
 </script>
-
 </body>
 </html>
