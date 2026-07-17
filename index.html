@@ -197,6 +197,52 @@
       font-size: 1.2rem;
     }
 
+    /* --- NUEVOS ESTILOS PARA SUGERENCIAS AUTOCOMPLETE --- */
+    .suggestions-list {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+      max-height: 320px;
+      overflow-y: auto;
+      display: none;
+      list-style: none;
+      padding: 6px;
+    }
+    .suggestions-list.visible {
+      display: block;
+    }
+    .suggestion-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: background var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .suggestion-item:hover {
+      background: var(--bg);
+    }
+    .suggestion-item .suggestion-title {
+      font-weight: 500;
+      color: var(--text);
+    }
+    .suggestion-item .suggestion-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* ---------------------------------------------------- */
+
     #ai-output {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -312,6 +358,8 @@
   <div class="search-bar">
     <input type="text" id="search-input" placeholder="Escribe un tema, persona o concepto..." autocomplete="off" />
     <span class="search-icon">🔍</span>
+    <!-- Lista de autocompletado añadida -->
+    <ul id="suggestions-box" class="suggestions-list"></ul>
   </div>
 
   <!-- Resultado de la IA -->
@@ -319,6 +367,8 @@
 </div>
 
 <script>
+  let debounceTimer;
+
   // Parseo de Markdown básico
   function parseMarkdown(text) {
     return text
@@ -351,9 +401,76 @@
     document.body.classList.toggle('dark-mode');
   }
 
+  // LÓGICA DE AUTOCOMPLETADO (WIKIPEDIA OPENSEARCH)
+  const searchInput = document.getElementById('search-input');
+  const suggestionsBox = document.getElementById('suggestions-box');
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const query = searchInput.value.trim();
+    const sourceLang = document.getElementById('source-lang-select').value;
+
+    if (query.length < 2) {
+      suggestionsBox.classList.remove('visible');
+      return;
+    }
+
+    // Debounce de 300ms para evitar llamadas excesivas a la API
+    debounceTimer = setTimeout(async () => {
+      try {
+        const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // data[1] son los títulos, data[2] son las descripciones cortas de Wikipedia
+        const titles = data[1] || [];
+        const descriptions = data[2] || [];
+
+        if (titles.length === 0) {
+          suggestionsBox.classList.remove('visible');
+          return;
+        }
+
+        suggestionsBox.innerHTML = '';
+        titles.forEach((title, index) => {
+          const li = document.createElement('li');
+          li.className = 'suggestion-item';
+          
+          const descText = descriptions[index] || 'Artículo de Wikipedia';
+          
+          li.innerHTML = `
+            <span class="suggestion-title">${title}</span>
+            <span class="suggestion-desc">${descText}</span>
+          `;
+
+          li.addEventListener('click', () => {
+            searchInput.value = title;
+            suggestionsBox.classList.remove('visible');
+            executeSearch(); // Ejecuta la búsqueda automáticamente al hacer clic
+          });
+
+          suggestionsBox.appendChild(li);
+        });
+
+        suggestionsBox.classList.add('visible');
+      } catch (err) {
+        console.error('Error al obtener sugerencias:', err);
+      }
+    }, 300);
+  });
+
+  // Cerrar la lista de sugerencias al hacer clic fuera del buscador
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+      suggestionsBox.classList.remove('visible');
+    }
+  });
+
   // Búsqueda principal
   async function executeSearch() {
-    const query = document.getElementById('search-input').value.trim();
+    suggestionsBox.classList.remove('visible');
+    const query = searchInput.value.trim();
     const sourceLang = document.getElementById('source-lang-select').value;
     const targetLang = document.getElementById('output-lang-select').value;
 
@@ -433,7 +550,7 @@
   }
 
   // Buscar con Enter
-  document.getElementById('search-input').addEventListener('keydown', (e) => {
+  searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') executeSearch();
   });
 
