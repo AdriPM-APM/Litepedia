@@ -187,6 +187,7 @@
       background: #c9302c;
     }
 
+    /* Resto de estilos */
     .app {
       max-width: 700px;
       width: 100%;
@@ -370,7 +371,8 @@
       text-align: left;
     }
 
-    .non-ai-content .wiki-image {
+    .non-ai-content .wiki-image,
+    .ai-content .wiki-image {
       float: right;
       margin: 0 0 12px 16px;
       max-width: 200px;
@@ -379,53 +381,68 @@
       background: var(--bg);
     }
 
-    .non-ai-content .wiki-image img {
+    .non-ai-content .wiki-image img,
+    .ai-content .wiki-image img {
       width: 100%;
       height: auto;
       display: block;
     }
 
-    .non-ai-content .wiki-image .image-caption {
+    .non-ai-content .wiki-image .image-caption,
+    .ai-content .wiki-image .image-caption {
       font-size: 0.75rem;
       color: var(--text-secondary);
       text-align: center;
       margin-top: 4px;
     }
 
-    .non-ai-content .extract-text {
+    .non-ai-content .extract-text,
+    .ai-content .extract-text {
       white-space: pre-wrap;
       word-wrap: break-word;
     }
 
-    .non-ai-content .extract-text a {
+    .non-ai-content .extract-text a,
+    .ai-content .extract-text a {
       color: var(--accent);
       text-decoration: none;
     }
 
-    .non-ai-content .extract-text a:hover {
+    .non-ai-content .extract-text a:hover,
+    .ai-content .extract-text a:hover {
       text-decoration: underline;
+    }
+
+    .translate-note {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.5rem;
     }
   </style>
 </head>
 <body>
 
+<!-- BANNER COMPACTO CON ACCIONES -->
 <div id="warning-banner" class="warning-banner">
   <span class="banner-text" id="banner-text">
-    ⚠️ When AI fails, use "Non-AI mode" to see the full article.
+    ⚠️ Modo IA: resumen traducido. Usa "Non-AI mode" para ver el artículo completo.
   </span>
   <div class="banner-actions">
-    <button class="banner-btn primary" id="ignore-30d" type="button">Ignorar 30 días</button>
-    <button class="banner-btn" id="hide-session" type="button">Ocultar</button>
+    <button class="banner-btn primary" id="ignore-30d">Ignorar 30 días</button>
+    <button class="banner-btn" id="hide-session">Ocultar</button>
   </div>
 </div>
 
 <div class="app">
   <header class="header">
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema" type="button">🌓</button>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema">🌓</button>
     <div class="logo">Litepedia</div>
     <div class="tagline">La enciclopedia resumida y libre</div>
   </header>
 
+  <!-- Controles con botón Non-AI independiente -->
   <div class="controls">
     <div class="control-group">
       <label for="source-lang-select">De:</label>
@@ -446,12 +463,12 @@
         <option value="de">DE</option>
       </select>
     </div>
-    <button id="non-ai-toggle-btn" class="non-ai-toggle-btn" type="button">Non-AI mode</button>
+    <button id="non-ai-toggle-btn" class="non-ai-toggle-btn">Non-AI mode</button>
   </div>
 
   <div class="search-container">
     <input type="text" id="search-input" class="search-input" placeholder="Buscar en Litepedia" autocomplete="off" />
-    <button class="search-btn" onclick="executeSearch()" type="button">🔍</button>
+    <button class="search-btn" onclick="executeSearch()">🔍</button>
     <ul id="suggestions-box" class="suggestions-list"></ul>
   </div>
 
@@ -459,19 +476,18 @@
 </div>
 
 <script>
+  // --- Gestión del banner ---
   const banner = document.getElementById('warning-banner');
   const bannerText = document.getElementById('banner-text');
   const ignoreBtn = document.getElementById('ignore-30d');
   const hideBtn = document.getElementById('hide-session');
   const nonAIBtn = document.getElementById('non-ai-toggle-btn');
-  const searchInput = document.getElementById('search-input');
-  const suggestionsBox = document.getElementById('suggestions-box');
 
   const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
   const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
   function hideBanner() {
-    if (banner) banner.classList.add('hidden');
+    banner.classList.add('hidden');
     document.body.classList.add('banner-hidden');
   }
 
@@ -492,60 +508,55 @@
       return;
     }
 
-    if (banner) banner.classList.remove('hidden');
+    banner.classList.remove('hidden');
     document.body.classList.remove('banner-hidden');
   }
 
   showBannerIfNeeded();
 
-  if (ignoreBtn) {
-    ignoreBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 30);
-      localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
-      sessionStorage.removeItem(SESSION_HIDE);
-      hideBanner();
-    });
-  }
+  ignoreBtn.addEventListener('click', () => {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
+    sessionStorage.removeItem(SESSION_HIDE);
+    hideBanner();
+  });
 
-  if (hideBtn) {
-    hideBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
-      if (ignoreUntil) {
-        const expiry = new Date(ignoreUntil);
-        if (expiry > new Date()) return;
+  hideBtn.addEventListener('click', () => {
+    const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
+    if (ignoreUntil) {
+      const expiry = new Date(ignoreUntil);
+      if (expiry > new Date()) {
+        return;
       }
-      sessionStorage.setItem(SESSION_HIDE, 'true');
-      hideBanner();
-    });
-  }
+    }
+    sessionStorage.setItem(SESSION_HIDE, 'true');
+    hideBanner();
+  });
 
+  // --- Modo Non-AI (independiente) ---
   let nonAIMode = false;
 
-  if (nonAIBtn) {
-    nonAIBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      nonAIMode = !nonAIMode;
-      nonAIBtn.classList.toggle('active', nonAIMode);
-      nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
+  nonAIBtn.addEventListener('click', () => {
+    nonAIMode = !nonAIMode;
+    nonAIBtn.classList.toggle('active', nonAIMode);
+    nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
 
-      if (nonAIMode) {
-        if (banner) banner.classList.add('non-ai-active');
-        if (bannerText) bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo.';
-      } else {
-        if (banner) banner.classList.remove('non-ai-active');
-        if (bannerText) bannerText.textContent = '⚠️ When AI fails, use "Non-AI mode" to see the full article.';
-      }
+    if (nonAIMode) {
+      banner.classList.add('non-ai-active');
+      bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo sin traducción.';
+    } else {
+      banner.classList.remove('non-ai-active');
+      bannerText.textContent = '⚡ Modo IA: resumen traducido del artículo.';
+    }
 
-      const query = searchInput.value.trim();
-      if (query) {
-        executeSearch();
-      }
-    });
-  }
+    const query = document.getElementById('search-input').value.trim();
+    if (query) {
+      executeSearch();
+    }
+  });
 
+  // --- Funciones comunes ---
   function parseMarkdown(text) {
     return text
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -556,89 +567,93 @@
 
   function showLoading() {
     const out = document.getElementById('ai-output');
-    if (out) {
-      out.className = 'visible';
-      out.innerHTML = `<div class="loading">Procesando artículo...</div>`;
-    }
+    out.className = 'visible';
+    out.innerHTML = `<div class="loading">⏳ Cargando artículo...</div>`;
   }
 
   function showError(msg) {
     const out = document.getElementById('ai-output');
-    if (out) {
-      out.className = 'visible';
-      out.innerHTML = `<div class="error-msg">Error: ${msg}</div>`;
-    }
+    out.className = 'visible';
+    out.innerHTML = `<div class="error-msg">❌ Error: ${msg}</div>`;
   }
 
   function showResult(html) {
     const out = document.getElementById('ai-output');
-    if (out) {
-      out.className = 'visible';
-      out.innerHTML = html;
-    }
+    out.className = 'visible';
+    out.innerHTML = html;
   }
 
   function toggleTheme() {
     document.body.classList.toggle('dark-mode');
   }
 
+  // --- Sugerencias ---
+  const searchInput = document.getElementById('search-input');
+  const suggestionsBox = document.getElementById('suggestions-box');
   let debounceTimer;
 
-  if (searchInput && suggestionsBox) {
-    searchInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      const query = searchInput.value.trim();
-      const sourceLang = document.getElementById('source-lang-select').value;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const query = searchInput.value.trim();
+    const sourceLang = document.getElementById('source-lang-select').value;
 
-      if (query.length < 2) {
-        suggestionsBox.classList.remove('visible');
-        return;
-      }
+    if (query.length < 2) {
+      suggestionsBox.classList.remove('visible');
+      return;
+    }
 
-      debounceTimer = setTimeout(async () => {
-        try {
-          const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
-          const res = await fetch(url);
-          if (!res.ok) return;
-          const data = await res.json();
-          const titles = data[1] || [];
-          const descriptions = data[2] || [];
+    debounceTimer = setTimeout(async () => {
+      try {
+        const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const titles = data[1] || [];
+        const descriptions = data[2] || [];
 
-          if (titles.length === 0) {
-            suggestionsBox.classList.remove('visible');
-            return;
-          }
-
-          suggestionsBox.innerHTML = '';
-          titles.forEach((title, index) => {
-            const li = document.createElement('li');
-            li.className = 'suggestion-item';
-            const descText = descriptions[index] || 'Artículo de Wikipedia';
-            li.innerHTML = `
-              <span class="suggestion-title">${title}</span>
-              <span class="suggestion-desc">${descText}</span>
-            `;
-            li.addEventListener('click', () => {
-              searchInput.value = title;
-              suggestionsBox.classList.remove('visible');
-              executeSearch();
-            });
-            suggestionsBox.appendChild(li);
-          });
-          suggestionsBox.classList.add('visible');
-        } catch (err) {
-          console.error('Error al obtener sugerencias:', err);
+        if (titles.length === 0) {
+          suggestionsBox.classList.remove('visible');
+          return;
         }
-      }, 300);
-    });
 
-    document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-        suggestionsBox.classList.remove('visible');
+        suggestionsBox.innerHTML = '';
+        titles.forEach((title, index) => {
+          const li = document.createElement('li');
+          li.className = 'suggestion-item';
+          const descText = descriptions[index] || 'Artículo de Wikipedia';
+          li.innerHTML = `
+            <span class="suggestion-title">${title}</span>
+            <span class="suggestion-desc">${descText}</span>
+          `;
+          li.addEventListener('click', () => {
+            searchInput.value = title;
+            suggestionsBox.classList.remove('visible');
+            executeSearch();
+          });
+          suggestionsBox.appendChild(li);
+        });
+        suggestionsBox.classList.add('visible');
+      } catch (err) {
+        console.error('Error al obtener sugerencias:', err);
       }
-    });
-  }
+    }, 300);
+  });
 
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+      suggestionsBox.classList.remove('visible');
+    }
+  });
+
+  // Enter para buscar
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSearch();
+    }
+  });
+
+  // --- Funciones para obtener imagen y contenido ---
   async function fetchPageImage(title, lang) {
     try {
       const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
@@ -661,76 +676,62 @@
     }
   }
 
-  async function showNonAIResult(query, sourceLang) {
-    showLoading();
-    try {
-      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
-      const wikiRes = await fetch(wikiUrl);
-      if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
-      const wikiData = await wikiRes.json();
-      const pages = wikiData.query.pages;
-      const page = Object.values(pages)[0];
-      if (!page || page.missing) {
-        throw new Error(`No se encontró el artículo "${query}" en Wikipedia (${sourceLang}).`);
-      }
-      if (!page.extract) {
-        throw new Error('El artículo está vacío o no tiene contenido textual.');
-      }
+  // Obtener extracto de Wikipedia
+  async function fetchExtract(title, lang) {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(title)}&origin=*&format=json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Error al conectar con Wikipedia');
+    const data = await res.json();
+    const pages = data.query.pages;
+    const page = Object.values(pages)[0];
+    if (!page || page.missing) {
+      throw new Error(`No se encontró el artículo "${title}" en Wikipedia (${lang}).`);
+    }
+    if (!page.extract) {
+      throw new Error('El artículo está vacío o no tiene contenido textual.');
+    }
+    return page.extract;
+  }
 
-      const extract = page.extract;
-      const imageInfo = await fetchPageImage(query, sourceLang);
-
-      let html = `<div class="non-ai-content">`;
-      if (imageInfo) {
-        html += `<div class="wiki-image">
-          <img src="${imageInfo.url}" alt="Imagen del artículo" loading="lazy" />
-          <div class="image-caption">Imagen de Wikipedia</div>
-        </div>`;
-      }
-      let formattedExtract = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
-        const parts = p1.split('|');
-        const article = parts[0];
-        const display = parts[1] || article;
-        return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
-      });
-      formattedExtract = formattedExtract.replace(/\n/g, '<br>');
-      html += `<div class="extract-text">${formattedExtract}</div>`;
-      html += `<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;">
-        📄 Texto completo del artículo de Wikipedia (${sourceLang}). 
-        <a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(query)}" target="_blank" rel="noopener">Ver original</a>
-      </p>`;
-      html += `</div>`;
-      showResult(html);
-    } catch (err) {
-      showError(err.message);
-      console.error(err);
+  // Traducir texto con MyMemory
+  async function translateText(text, sourceLang, targetLang) {
+    if (sourceLang === targetLang) return text;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Error al contactar con el servicio de traducción');
+    const data = await res.json();
+    if (data.responseStatus === 200 && data.responseData) {
+      return data.responseData.translatedText;
+    } else {
+      throw new Error(data.responseDetails || 'Error en la traducción');
     }
   }
 
-  async function executeSearch() {
-    if (suggestionsBox) suggestionsBox.classList.remove('visible');
-    const query = searchInput.value.trim();
-    const sourceLang = document.getElementById('source-lang-select').value;
-    const targetLang = document.getElementById('output-lang-select').value;
-
-    if (!query) return;
-
-    if (nonAIMode) {
-      await showNonAIResult(query, sourceLang);
-      return;
+  // Mostrar artículo (modo IA o Non-AI)
+  function displayArticle(title, extract, imageInfo, sourceLang, targetLang, isNonAI) {
+    let html = `<div class="${isNonAI ? 'non-ai-content' : 'ai-content'}">`;
+    if (imageInfo) {
+      html += `<div class="wiki-image">
+        <img src="${imageInfo.url}" alt="Imagen del artículo" loading="lazy" />
+        <div class="image-caption">Imagen de Wikipedia</div>
+      </div>`;
     }
+    // Formatear enlaces [[Artículo|texto]] -> <a href="...">
+    let formatted = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
+      const parts = p1.split('|');
+      const article = parts[0];
+      const display = parts[1] || article;
+      return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
+    });
+    formatted = formatted.replace(/\n/g, '<br>');
+    html += `<div class="extract-text">${formatted}</div>`;
 
-    showLoading();
-    try {
-      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
-      const wikiRes = await fetch(wikiUrl);
-      if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
-      const wikiData = await wikiRes.json();
-      const pages = wikiData.query.pages;
-      const page = Object.values(pages)[0];
-      
-      if (!page || page.missing || !page.extract) {
-        throw new Error(`No se encontró contenido para "${query}" en Wikipedia (${sourceLang}).`);
-      }
-
-      const textSnippet = page.extract.substring(0, 1500
+    if (isNonAI) {
+      html += `<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;">
+        📄 Texto completo del artículo de Wikipedia (${sourceLang}). 
+        <a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(title)}" target="_blank" rel="noopener">Ver original</a>
+      </p>`;
+    } else {
+      const note = sourceLang !== targetLang
+        ? `Traducido automáticamente de ${sourceLang.toUpperCase()} a ${targetLang.toUpperCase()}`
+        : `Resumen del artículo en ${sourc
