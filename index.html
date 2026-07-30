@@ -449,12 +449,12 @@
         <option value="de">DE</option>
       </select>
     </div>
-    <button id="non-ai-toggle-btn" class="non-ai-toggle-btn">Non-AI mode</button>
+    <button id="non-ai-toggle-btn" class="non-ai-toggle-btn" type="button">Non-AI mode</button>
   </div>
 
   <div class="search-container">
     <input type="text" id="search-input" class="search-input" placeholder="Buscar en Litepedia" autocomplete="off" />
-    <button class="search-btn" onclick="executeSearch()">🔍</button>
+    <button class="search-btn" onclick="executeSearch()" type="button">🔍</button>
     <ul id="suggestions-box" class="suggestions-list"></ul>
   </div>
 
@@ -500,7 +500,8 @@
 
   showBannerIfNeeded();
 
-  ignoreBtn.addEventListener('click', () => {
+  ignoreBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
     localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
@@ -508,7 +509,8 @@
     hideBanner();
   });
 
-  hideBtn.addEventListener('click', () => {
+  hideBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
     if (ignoreUntil) {
       const expiry = new Date(ignoreUntil);
@@ -523,7 +525,8 @@
   // --- Modo Non-AI (independiente) ---
   let nonAIMode = false;
 
-  nonAIBtn.addEventListener('click', () => {
+  nonAIBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     nonAIMode = !nonAIMode;
     nonAIBtn.classList.toggle('active', nonAIMode);
     nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
@@ -573,7 +576,7 @@
     document.body.classList.toggle('dark-mode');
   }
 
-  // --- Sugerencias ---
+  // --- Sugerencias de Wikipedia ---
   const searchInput = document.getElementById('search-input');
   const suggestionsBox = document.getElementById('suggestions-box');
   let debounceTimer;
@@ -700,7 +703,7 @@
     }
   }
 
-  // --- Función principal de búsqueda (Conexión Real con Wikipedia y API/IA original) ---
+  // --- Función principal de búsqueda ---
   async function executeSearch() {
     suggestionsBox.classList.remove('visible');
     const query = searchInput.value.trim();
@@ -728,7 +731,5 @@
         throw new Error(`No se encontró contenido para "${query}" en Wikipedia (${sourceLang}).`);
       }
 
-      const textSnippet = page.extract.substring(0, 1500); // Fragmento para procesar
-      const imageInfo = await fetchPageImage(query, sourceLang);
-
-      // Aquí entra tu pasar
+      const textSnippet = page.extract.substring(0, 1500);
+      const imageInfo = await fetchPageImage(query, s
