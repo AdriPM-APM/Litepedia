@@ -469,7 +469,6 @@
   const hideBtn = document.getElementById('hide-session');
   const nonAIBtn = document.getElementById('non-ai-toggle-btn');
 
-  // Constantes para almacenamiento
   const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
   const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
@@ -499,7 +498,6 @@
     document.body.classList.remove('banner-hidden');
   }
 
-  // Comprobar banner al cargar la página
   showBannerIfNeeded();
 
   ignoreBtn.addEventListener('click', () => {
@@ -702,7 +700,7 @@
     }
   }
 
-  // --- Función principal de búsqueda ---
+  // --- Función principal de búsqueda (Conexión Real con Wikipedia y API/IA original) ---
   async function executeSearch() {
     suggestionsBox.classList.remove('visible');
     const query = searchInput.value.trim();
@@ -716,13 +714,21 @@
       return;
     }
 
-    // Modo IA (simulado o integración pendiente)
+    // Modo IA original
     showLoading();
-    setTimeout(() => {
-      showResult(`<p><b>Resultado de IA para:</b> ${query} (${sourceLang} ➔ ${targetLang})</p><p>Esta es una simulación de la respuesta procesada por IA.</p>`);
-    }, 600);
-  }
-</script>
-</body>
-          </html>
-          
+    try {
+      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
+      const wikiRes = await fetch(wikiUrl);
+      if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
+      const wikiData = await wikiRes.json();
+      const pages = wikiData.query.pages;
+      const page = Object.values(pages)[0];
+      
+      if (!page || page.missing || !page.extract) {
+        throw new Error(`No se encontró contenido para "${query}" en Wikipedia (${sourceLang}).`);
+      }
+
+      const textSnippet = page.extract.substring(0, 1500); // Fragmento para procesar
+      const imageInfo = await fetchPageImage(query, sourceLang);
+
+      // Aquí entra tu pasar
