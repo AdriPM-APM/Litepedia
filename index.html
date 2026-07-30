@@ -187,7 +187,6 @@
       background: #c9302c;
     }
 
-    /* Resto de estilos */
     .app {
       max-width: 700px;
       width: 100%;
@@ -410,25 +409,23 @@
 </head>
 <body>
 
-<!-- BANNER COMPACTO CON ACCIONES -->
 <div id="warning-banner" class="warning-banner">
   <span class="banner-text" id="banner-text">
     ⚠️ When AI fails, use "Non-AI mode" to see the full article.
   </span>
   <div class="banner-actions">
-    <button class="banner-btn primary" id="ignore-30d">Ignorar 30 días</button>
-    <button class="banner-btn" id="hide-session">Ocultar</button>
+    <button class="banner-btn primary" id="ignore-30d" type="button">Ignorar 30 días</button>
+    <button class="banner-btn" id="hide-session" type="button">Ocultar</button>
   </div>
 </div>
 
 <div class="app">
   <header class="header">
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema">🌓</button>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema" type="button">🌓</button>
     <div class="logo">Litepedia</div>
     <div class="tagline">La enciclopedia resumida y libre</div>
   </header>
 
-  <!-- Controles con botón Non-AI independiente -->
   <div class="controls">
     <div class="control-group">
       <label for="source-lang-select">De:</label>
@@ -462,18 +459,19 @@
 </div>
 
 <script>
-  // --- Gestión del banner ---
   const banner = document.getElementById('warning-banner');
   const bannerText = document.getElementById('banner-text');
   const ignoreBtn = document.getElementById('ignore-30d');
   const hideBtn = document.getElementById('hide-session');
   const nonAIBtn = document.getElementById('non-ai-toggle-btn');
+  const searchInput = document.getElementById('search-input');
+  const suggestionsBox = document.getElementById('suggestions-box');
 
   const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
   const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
   function hideBanner() {
-    banner.classList.add('hidden');
+    if (banner) banner.classList.add('hidden');
     document.body.classList.add('banner-hidden');
   }
 
@@ -494,58 +492,60 @@
       return;
     }
 
-    banner.classList.remove('hidden');
+    if (banner) banner.classList.remove('hidden');
     document.body.classList.remove('banner-hidden');
   }
 
   showBannerIfNeeded();
 
-  ignoreBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30);
-    localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
-    sessionStorage.removeItem(SESSION_HIDE);
-    hideBanner();
-  });
+  if (ignoreBtn) {
+    ignoreBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
+      sessionStorage.removeItem(SESSION_HIDE);
+      hideBanner();
+    });
+  }
 
-  hideBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
-    if (ignoreUntil) {
-      const expiry = new Date(ignoreUntil);
-      if (expiry > new Date()) {
-        return;
+  if (hideBtn) {
+    hideBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
+      if (ignoreUntil) {
+        const expiry = new Date(ignoreUntil);
+        if (expiry > new Date()) return;
       }
-    }
-    sessionStorage.setItem(SESSION_HIDE, 'true');
-    hideBanner();
-  });
+      sessionStorage.setItem(SESSION_HIDE, 'true');
+      hideBanner();
+    });
+  }
 
-  // --- Modo Non-AI (independiente) ---
   let nonAIMode = false;
 
-  nonAIBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    nonAIMode = !nonAIMode;
-    nonAIBtn.classList.toggle('active', nonAIMode);
-    nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
+  if (nonAIBtn) {
+    nonAIBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      nonAIMode = !nonAIMode;
+      nonAIBtn.classList.toggle('active', nonAIMode);
+      nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
 
-    if (nonAIMode) {
-      banner.classList.add('non-ai-active');
-      bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo.';
-    } else {
-      banner.classList.remove('non-ai-active');
-      bannerText.textContent = '⚠️ When AI fails, use "Non-AI mode" to see the full article.';
-    }
+      if (nonAIMode) {
+        if (banner) banner.classList.add('non-ai-active');
+        if (bannerText) bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo.';
+      } else {
+        if (banner) banner.classList.remove('non-ai-active');
+        if (bannerText) bannerText.textContent = '⚠️ When AI fails, use "Non-AI mode" to see the full article.';
+      }
 
-    const query = document.getElementById('search-input').value.trim();
-    if (query) {
-      executeSearch();
-    }
-  });
+      const query = searchInput.value.trim();
+      if (query) {
+        executeSearch();
+      }
+    });
+  }
 
-  // --- Funciones comunes ---
   function parseMarkdown(text) {
     return text
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -556,85 +556,89 @@
 
   function showLoading() {
     const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = `<div class="loading">Procesando artículo...</div>`;
+    if (out) {
+      out.className = 'visible';
+      out.innerHTML = `<div class="loading">Procesando artículo...</div>`;
+    }
   }
 
   function showError(msg) {
     const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = `<div class="error-msg">Error: ${msg}</div>`;
+    if (out) {
+      out.className = 'visible';
+      out.innerHTML = `<div class="error-msg">Error: ${msg}</div>`;
+    }
   }
 
   function showResult(html) {
     const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = html;
+    if (out) {
+      out.className = 'visible';
+      out.innerHTML = html;
+    }
   }
 
   function toggleTheme() {
     document.body.classList.toggle('dark-mode');
   }
 
-  // --- Sugerencias de Wikipedia ---
-  const searchInput = document.getElementById('search-input');
-  const suggestionsBox = document.getElementById('suggestions-box');
   let debounceTimer;
 
-  searchInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    const query = searchInput.value.trim();
-    const sourceLang = document.getElementById('source-lang-select').value;
+  if (searchInput && suggestionsBox) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const query = searchInput.value.trim();
+      const sourceLang = document.getElementById('source-lang-select').value;
 
-    if (query.length < 2) {
-      suggestionsBox.classList.remove('visible');
-      return;
-    }
-
-    debounceTimer = setTimeout(async () => {
-      try {
-        const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
-        const titles = data[1] || [];
-        const descriptions = data[2] || [];
-
-        if (titles.length === 0) {
-          suggestionsBox.classList.remove('visible');
-          return;
-        }
-
-        suggestionsBox.innerHTML = '';
-        titles.forEach((title, index) => {
-          const li = document.createElement('li');
-          li.className = 'suggestion-item';
-          const descText = descriptions[index] || 'Artículo de Wikipedia';
-          li.innerHTML = `
-            <span class="suggestion-title">${title}</span>
-            <span class="suggestion-desc">${descText}</span>
-          `;
-          li.addEventListener('click', () => {
-            searchInput.value = title;
-            suggestionsBox.classList.remove('visible');
-            executeSearch();
-          });
-          suggestionsBox.appendChild(li);
-        });
-        suggestionsBox.classList.add('visible');
-      } catch (err) {
-        console.error('Error al obtener sugerencias:', err);
+      if (query.length < 2) {
+        suggestionsBox.classList.remove('visible');
+        return;
       }
-    }, 300);
-  });
 
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-      suggestionsBox.classList.remove('visible');
-    }
-  });
+      debounceTimer = setTimeout(async () => {
+        try {
+          const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const data = await res.json();
+          const titles = data[1] || [];
+          const descriptions = data[2] || [];
 
-  // --- Funciones para obtener imagen y contenido Non-AI ---
+          if (titles.length === 0) {
+            suggestionsBox.classList.remove('visible');
+            return;
+          }
+
+          suggestionsBox.innerHTML = '';
+          titles.forEach((title, index) => {
+            const li = document.createElement('li');
+            li.className = 'suggestion-item';
+            const descText = descriptions[index] || 'Artículo de Wikipedia';
+            li.innerHTML = `
+              <span class="suggestion-title">${title}</span>
+              <span class="suggestion-desc">${descText}</span>
+            `;
+            li.addEventListener('click', () => {
+              searchInput.value = title;
+              suggestionsBox.classList.remove('visible');
+              executeSearch();
+            });
+            suggestionsBox.appendChild(li);
+          });
+          suggestionsBox.classList.add('visible');
+        } catch (err) {
+          console.error('Error al obtener sugerencias:', err);
+        }
+      }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.classList.remove('visible');
+      }
+    });
+  }
+
   async function fetchPageImage(title, lang) {
     try {
       const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
@@ -703,9 +707,8 @@
     }
   }
 
-  // --- Función principal de búsqueda ---
   async function executeSearch() {
-    suggestionsBox.classList.remove('visible');
+    if (suggestionsBox) suggestionsBox.classList.remove('visible');
     const query = searchInput.value.trim();
     const sourceLang = document.getElementById('source-lang-select').value;
     const targetLang = document.getElementById('output-lang-select').value;
@@ -717,7 +720,6 @@
       return;
     }
 
-    // Modo IA original
     showLoading();
     try {
       const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
@@ -731,5 +733,4 @@
         throw new Error(`No se encontró contenido para "${query}" en Wikipedia (${sourceLang}).`);
       }
 
-      const textSnippet = page.extract.substring(0, 1500);
-      const imageInfo = await fetchPageImage(query, s
+      const textSnippet = page.extract.substring(0, 1500
