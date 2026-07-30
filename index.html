@@ -16,6 +16,7 @@
       --font-serif: 'Linux Libertine', Georgia, Times, serif;
       --warning-bg: #ffeedb;
       --warning-text: #6b4c1e;
+      --banner-height: 44px;
     }
 
     body.dark-mode {
@@ -43,59 +44,115 @@
       flex-direction: column;
       align-items: center;
       padding: 40px 20px;
-      padding-top: 100px; /* espacio para el banner fijo */
+      padding-top: calc(40px + var(--banner-height) + 12px);
+      transition: padding-top 0.2s;
+    }
+    body.banner-hidden {
+      padding-top: 40px;
     }
 
-    /* Banner de advertencia fijo */
+    /* Banner mejorado, menos invasivo */
     .warning-banner {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
+      height: var(--banner-height);
       background: var(--warning-bg);
       color: var(--warning-text);
-      padding: 10px 20px;
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
-      gap: 12px;
-      font-size: 0.9rem;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 0.85rem;
       border-bottom: 2px solid #d4a54a;
       z-index: 1000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      transition: background 0.3s, border-color 0.3s, transform 0.3s, opacity 0.3s;
+      overflow: hidden;
+      gap: 12px;
+    }
+    .warning-banner.hidden {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .warning-banner.non-ai-active {
+      background: #d9534f;
+      border-color: #b52b27;
+      color: #fff;
+    }
+    body.dark-mode .warning-banner.non-ai-active {
+      background: #8b2c2a;
+      border-color: #661f1d;
+      color: #f0e6e6;
     }
 
-    .warning-banner .warning-text {
+    .warning-banner .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .warning-banner .banner-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .warning-banner .banner-text {
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .warning-banner .banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .warning-banner .non-ai-toggle {
       background: #d4a54a;
       border: none;
       color: #1f1a0e;
-      padding: 4px 16px;
+      padding: 4px 14px;
       border-radius: 20px;
       font-weight: bold;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
       white-space: nowrap;
+      line-height: 1.4;
     }
-
     .warning-banner .non-ai-toggle:hover {
       background: #b8923a;
+      transform: scale(0.97);
     }
-
     .warning-banner .non-ai-toggle.active {
-      background: #b33;
-      color: #fff;
+      background: #fff;
+      color: #b33;
+    }
+    .warning-banner.non-ai-active .non-ai-toggle {
+      background: #fff;
+      color: #b33;
+    }
+    .warning-banner .close-banner {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.6;
+      padding: 0 4px;
+      transition: opacity 0.2s;
+      line-height: 1;
+    }
+    .warning-banner .close-banner:hover {
+      opacity: 1;
     }
 
-    .warning-banner .non-ai-toggle.active:hover {
-      background: #922;
-    }
-
+    /* Ajuste para que el contenido no se solape */
     .app {
       max-width: 700px;
       width: 100%;
@@ -347,12 +404,18 @@
 </head>
 <body>
 
-<!-- BANNER DE ADVERTENCIA -->
+<!-- BANNER MEJORADO -->
 <div id="warning-banner" class="warning-banner">
-  <span class="warning-text">
-    ⚠️ When AI falls down and goes on a crisis due to AI restrictions to prevent further damage, use the button of "Non-AI mode".
-  </span>
-  <button id="non-ai-toggle" class="non-ai-toggle">Non-AI mode</button>
+  <div class="banner-content">
+    <span class="banner-icon">⚠️</span>
+    <span class="banner-text" id="banner-text">
+      When AI fails due to restrictions, use "Non-AI mode" to see the full article.
+    </span>
+  </div>
+  <div class="banner-actions">
+    <button id="non-ai-toggle" class="non-ai-toggle">Non-AI mode</button>
+    <button id="close-banner" class="close-banner" aria-label="Cerrar aviso">✕</button>
+  </div>
 </div>
 
 <div class="app">
@@ -394,15 +457,43 @@
 </div>
 
 <script>
-  // --- Estado del modo Non-AI ---
-  let nonAIMode = false;
+  // --- Gestión del banner ---
+  const banner = document.getElementById('warning-banner');
+  const closeBtn = document.getElementById('close-banner');
   const nonAIToggle = document.getElementById('non-ai-toggle');
+  const bannerText = document.getElementById('banner-text');
+
+  // Cerrar banner (recordar preferencia)
+  closeBtn.addEventListener('click', () => {
+    banner.classList.add('hidden');
+    document.body.classList.add('banner-hidden');
+    localStorage.setItem('litepedia-banner-closed', 'true');
+  });
+
+  // Comprobar si el banner fue cerrado anteriormente
+  if (localStorage.getItem('litepedia-banner-closed') === 'true') {
+    banner.classList.add('hidden');
+    document.body.classList.add('banner-hidden');
+  }
+
+  // Estado del modo Non-AI
+  let nonAIMode = false;
 
   nonAIToggle.addEventListener('click', () => {
     nonAIMode = !nonAIMode;
     nonAIToggle.classList.toggle('active', nonAIMode);
     nonAIToggle.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
-    // Si hay una búsqueda ya hecha, la repetimos en el nuevo modo
+    
+    // Cambiar color del banner
+    if (nonAIMode) {
+      banner.classList.add('non-ai-active');
+      bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo de Wikipedia.';
+    } else {
+      banner.classList.remove('non-ai-active');
+      bannerText.textContent = 'When AI fails due to restrictions, use "Non-AI mode" to see the full article.';
+    }
+
+    // Si hay una búsqueda activa, repetirla
     const query = document.getElementById('search-input').value.trim();
     if (query) {
       executeSearch();
@@ -532,7 +623,6 @@
     showLoading();
 
     try {
-      // Obtener extracto
       const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
       const wikiRes = await fetch(wikiUrl);
       if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
@@ -548,13 +638,10 @@
       }
 
       const extract = page.extract;
-      // Obtener imagen
       const imageInfo = await fetchPageImage(query, sourceLang);
 
-      // Construir HTML
       let html = `<div class="non-ai-content">`;
 
-      // Imagen si existe
       if (imageInfo) {
         html += `<div class="wiki-image">
           <img src="${imageInfo.url}" alt="Imagen del artículo" loading="lazy" />
@@ -562,18 +649,13 @@
         </div>`;
       }
 
-      // Texto del extracto (convertir enlaces wiki a enlaces HTML básicos)
-      // Los enlaces en Wikipedia son [[texto]] o [[Artículo|texto]]
       let formattedExtract = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
-        // Si hay pipe, el primer es el artículo, el segundo el texto mostrado
         const parts = p1.split('|');
         const article = parts[0];
         const display = parts[1] || article;
-        // Generamos un enlace a la página de Wikipedia en el idioma original
         return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
       });
 
-      // Reemplazar saltos de línea por <br> y preservar espacios
       formattedExtract = formattedExtract.replace(/\n/g, '<br>');
 
       html += `<div class="extract-text">${formattedExtract}</div>`;
@@ -600,7 +682,7 @@
 
     if (!query) return;
 
-    // Si estamos en modo Non-AI, mostrar directamente el contenido de Wikipedia
+    // Modo Non-AI
     if (nonAIMode) {
       await showNonAIResult(query, sourceLang);
       return;
@@ -649,40 +731,4 @@
 
       const aiRes = await fetch('/api/proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(aiPayload)
-      });
-
-      if (!aiRes.ok) {
-        const errText = await aiRes.text();
-        throw new Error(`Error en el proxy de IA (${aiRes.status}): ${errText}`);
-      }
-      const aiData = await aiRes.json();
-
-      let raw = aiData.choices?.[0]?.message?.content;
-      if (!raw) {
-        raw = aiData.output || aiData.response || JSON.stringify(aiData);
-        if (!raw || raw.length < 10) throw new Error('La IA devolvió una respuesta vacía o inválida.');
-      }
-
-      const html = parseMarkdown(raw);
-      showResult(html);
-
-    } catch (err) {
-      showError(err.message);
-      console.error(err);
-    }
-  }
-
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') executeSearch();
-  });
-
-  // Modo oscuro automático
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.body.classList.add('dark-mode');
-  }
-</script>
-
-</body>
-  </html>
+        headers: { 'Content-
