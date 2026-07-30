@@ -4,14 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Litepedia</title>
-  
-  <!-- Popunder anti Ad Block -->
-  <script src="https://regaincocoa.com/3a/c6/5d/3ac65dbf44c78eb6a3a32d6313872636.js"></script>
-  <!-- ANTI-ADBLOCK JS SYNC -->
-  <script src="https://regaincocoa.com/bf/56/57/bf56578b515fb5cf195c83295dffd11c.js"></script>
-
   <style>
-    /* Estilos base al estilo Wikipedia */
     :root {
       --bg: #ffffff;
       --text: #202122;
@@ -54,7 +47,6 @@
       text-align: center;
     }
 
-    /* Cabecera / Logo */
     .header {
       margin-bottom: 30px;
       position: relative;
@@ -86,7 +78,6 @@
       color: var(--text-secondary);
     }
 
-    /* Controles de Idioma */
     .controls {
       display: flex;
       justify-content: center;
@@ -115,11 +106,10 @@
       cursor: pointer;
     }
 
-    /* Barra de Búsqueda */
     .search-container {
       display: flex;
       position: relative;
-      margin-bottom: 15px;
+      margin-bottom: 30px;
       max-width: 600px;
       margin-left: auto;
       margin-right: auto;
@@ -159,7 +149,6 @@
       border-color: var(--accent-hover);
     }
 
-    /* Autocompletado */
     .suggestions-list {
       position: absolute;
       top: 100%;
@@ -217,45 +206,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Estilos de Anuncios / Ad Placement */
-    .ad-container {
-      margin: 20px auto;
-      max-width: 600px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 10px;
-      border-radius: 2px;
-      text-align: center;
-    }
-    
-    .ad-label {
-      display: block;
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .smartlink-btn {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 8px 16px;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: bold;
-      border-radius: 2px;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    .smartlink-btn:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    /* Área de Resultados */
     #ai-output {
       text-align: left;
       background: var(--bg);
@@ -302,14 +252,12 @@
 <body>
 
 <div class="app">
-  <!-- Cabecera -->
   <header class="header">
     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema">🌓</button>
     <div class="logo">Litepedia</div>
     <div class="tagline">La enciclopedia resumida y libre</div>
   </header>
 
-  <!-- Controles de idioma -->
   <div class="controls">
     <div class="control-group">
       <label for="source-lang-select">De:</label>
@@ -332,30 +280,13 @@
     </div>
   </div>
 
-  <!-- Barra de búsqueda -->
   <div class="search-container">
     <input type="text" id="search-input" class="search-input" placeholder="Buscar en Litepedia" autocomplete="off" />
     <button class="search-btn" onclick="executeSearch()">🔍</button>
     <ul id="suggestions-box" class="suggestions-list"></ul>
   </div>
 
-  <!-- Contenedor del Native Banner -->
-  <div class="ad-container">
-    <span class="ad-label">Publicidad</span>
-    <!-- Script del Banner Nativo -->
-    <script async="async" data-cfasync="false" src="https://regaincocoa.com/590a5119bc6276209a19afc4360c5f5b/invoke.js"></script>
-    <div id="container-590a5119bc6276209a19afc4360c5f5b"></div>
-  </div>
-
-  <!-- Resultado de la IA -->
   <div id="ai-output"></div>
-
-  <!-- Integración del Smartlink -->
-  <div class="ad-container" style="border: none; background: transparent;">
-    <a class="smartlink-btn" href="https://regaincocoa.com/wsvukwd5q?key=1e236717726157a8825f16d5e4c00e81" target="_blank" rel="noopener noreferrer">
-      Apoyar a Litepedia (Patrocinado)
-    </a>
-  </div>
 </div>
 
 <script>
@@ -539,4 +470,5 @@
 </script>
 
 </body>
-</html>
+  </html>
+      
