@@ -187,7 +187,7 @@
       background: #c9302c;
     }
 
-    /* Resto de estilos (sin cambios relevantes) */
+    /* Resto de estilos */
     .app {
       max-width: 700px;
       width: 100%;
@@ -272,7 +272,7 @@
       position: absolute;
       top: 100%;
       left: 0;
-      right: 54px;
+      right: 0;
       background: var(--bg);
       border: 1px solid var(--border);
       border-top: none;
@@ -473,57 +473,48 @@
   const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
   const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
-  // Función para ocultar el banner (físicamente)
   function hideBanner() {
     banner.classList.add('hidden');
     document.body.classList.add('banner-hidden');
   }
 
-  // Función para mostrar el banner (si no está oculto por otras razones)
   function showBannerIfNeeded() {
-    // Primero comprobar si hay un ignore de 30 días vigente
     const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
     if (ignoreUntil) {
       const expiry = new Date(ignoreUntil);
       if (expiry > new Date()) {
-        // Aún vigente, ocultar
         hideBanner();
         return;
       } else {
-        // Expirado, limpiar
         localStorage.removeItem(STORAGE_IGNORE);
       }
     }
 
-    // Si no hay ignore, comprobar ocultación de sesión
     if (sessionStorage.getItem(SESSION_HIDE) === 'true') {
       hideBanner();
       return;
     }
 
-    // Si no hay nada, mostrar (quitando clase hidden)
     banner.classList.remove('hidden');
     document.body.classList.remove('banner-hidden');
   }
 
-  // Evento: Ignorar por 30 días
+  // Comprobar banner al cargar la página
+  showBannerIfNeeded();
+
   ignoreBtn.addEventListener('click', () => {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
     localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
-    // Limpiar posible sesión
     sessionStorage.removeItem(SESSION_HIDE);
     hideBanner();
   });
 
-  // Evento: Ocultar (solo sesión)
   hideBtn.addEventListener('click', () => {
-    // Si hay un ignore activo, no hacemos nada (prevalece)
     const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
     if (ignoreUntil) {
       const expiry = new Date(ignoreUntil);
       if (expiry > new Date()) {
-        // Ignore activo, no se puede ocultar por sesión
         return;
       }
     }
@@ -539,7 +530,6 @@
     nonAIBtn.classList.toggle('active', nonAIMode);
     nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
 
-    // Cambiar aspecto del banner (opcional)
     if (nonAIMode) {
       banner.classList.add('non-ai-active');
       bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo.';
@@ -548,7 +538,6 @@
       bannerText.textContent = '⚠️ When AI fails, use "Non-AI mode" to see the full article.';
     }
 
-    // Si hay una búsqueda activa, repetir
     const query = document.getElementById('search-input').value.trim();
     if (query) {
       executeSearch();
@@ -727,7 +716,13 @@
       return;
     }
 
-    // Modo IA
+    // Modo IA (simulado o integración pendiente)
     showLoading();
-    try {
-      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encod
+    setTimeout(() => {
+      showResult(`<p><b>Resultado de IA para:</b> ${query} (${sourceLang} ➔ ${targetLang})</p><p>Esta es una simulación de la respuesta procesada por IA.</p>`);
+    }, 600);
+  }
+</script>
+</body>
+          </html>
+          
