@@ -16,7 +16,7 @@
       --font-serif: 'Linux Libertine', Georgia, Times, serif;
       --warning-bg: #ffeedb;
       --warning-text: #6b4c1e;
-      --banner-height: 44px;
+      --banner-height: 36px;
     }
 
     body.dark-mode {
@@ -51,7 +51,7 @@
       padding-top: 40px;
     }
 
-    /* Banner mejorado, menos invasivo */
+    /* Banner compacto */
     .warning-banner {
       position: fixed;
       top: 0;
@@ -63,14 +63,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
-      font-size: 0.85rem;
+      padding: 0 12px;
+      font-size: 0.75rem;
       border-bottom: 2px solid #d4a54a;
       z-index: 1000;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
       transition: background 0.3s, border-color 0.3s, transform 0.3s, opacity 0.3s;
       overflow: hidden;
-      gap: 12px;
+      gap: 8px;
     }
     .warning-banner.hidden {
       transform: translateY(-100%);
@@ -88,71 +88,106 @@
       color: #f0e6e6;
     }
 
-    .warning-banner .banner-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 0;
-    }
-    .warning-banner .banner-icon {
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
     .warning-banner .banner-text {
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
     }
+
     .warning-banner .banner-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
     }
 
-    .warning-banner .non-ai-toggle {
-      background: #d4a54a;
+    .warning-banner .banner-btn {
+      background: rgba(0,0,0,0.08);
       border: none;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: inherit;
+      white-space: nowrap;
+      line-height: 1.6;
+    }
+    .warning-banner .banner-btn:hover {
+      background: rgba(0,0,0,0.15);
+    }
+    .warning-banner .banner-btn.primary {
+      background: #d4a54a;
       color: #1f1a0e;
+    }
+    .warning-banner .banner-btn.primary:hover {
+      background: #b8923a;
+    }
+    .warning-banner.non-ai-active .banner-btn.primary {
+      background: #fff;
+      color: #b33;
+    }
+
+    /* Controles */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .control-group label {
+      color: var(--text-secondary);
+    }
+
+    .control-group select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 2px 5px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Botón Non-AI independiente */
+    .non-ai-toggle-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
       padding: 4px 14px;
       border-radius: 20px;
       font-weight: bold;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
       white-space: nowrap;
-      line-height: 1.4;
+      line-height: 1.6;
     }
-    .warning-banner .non-ai-toggle:hover {
-      background: #b8923a;
+    .non-ai-toggle-btn:hover {
+      background: var(--accent-hover);
       transform: scale(0.97);
     }
-    .warning-banner .non-ai-toggle.active {
-      background: #fff;
-      color: #b33;
+    .non-ai-toggle-btn.active {
+      background: #d9534f;
     }
-    .warning-banner.non-ai-active .non-ai-toggle {
-      background: #fff;
-      color: #b33;
-    }
-    .warning-banner .close-banner {
-      background: transparent;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: inherit;
-      opacity: 0.6;
-      padding: 0 4px;
-      transition: opacity 0.2s;
-      line-height: 1;
-    }
-    .warning-banner .close-banner:hover {
-      opacity: 1;
+    .non-ai-toggle-btn.active:hover {
+      background: #c9302c;
     }
 
-    /* Ajuste para que el contenido no se solape */
+    /* Resto de estilos (sin cambios relevantes) */
     .app {
       max-width: 700px;
       width: 100%;
@@ -188,34 +223,6 @@
       font-size: 1.2rem;
       cursor: pointer;
       color: var(--text-secondary);
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 20px;
-      font-size: 0.85rem;
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .control-group label {
-      color: var(--text-secondary);
-    }
-
-    .control-group select {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 2px 5px;
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
     }
 
     .search-container {
@@ -360,7 +367,6 @@
       font-weight: bold;
     }
 
-    /* Estilos para el modo Non‑AI */
     .non-ai-content {
       text-align: left;
     }
@@ -404,17 +410,14 @@
 </head>
 <body>
 
-<!-- BANNER MEJORADO -->
+<!-- BANNER COMPACTO CON ACCIONES -->
 <div id="warning-banner" class="warning-banner">
-  <div class="banner-content">
-    <span class="banner-icon">⚠️</span>
-    <span class="banner-text" id="banner-text">
-      When AI fails due to restrictions, use "Non-AI mode" to see the full article.
-    </span>
-  </div>
+  <span class="banner-text" id="banner-text">
+    ⚠️ When AI fails, use "Non-AI mode" to see the full article.
+  </span>
   <div class="banner-actions">
-    <button id="non-ai-toggle" class="non-ai-toggle">Non-AI mode</button>
-    <button id="close-banner" class="close-banner" aria-label="Cerrar aviso">✕</button>
+    <button class="banner-btn primary" id="ignore-30d">Ignorar 30 días</button>
+    <button class="banner-btn" id="hide-session">Ocultar</button>
   </div>
 </div>
 
@@ -425,6 +428,7 @@
     <div class="tagline">La enciclopedia resumida y libre</div>
   </header>
 
+  <!-- Controles con botón Non-AI independiente -->
   <div class="controls">
     <div class="control-group">
       <label for="source-lang-select">De:</label>
@@ -445,6 +449,7 @@
         <option value="de">DE</option>
       </select>
     </div>
+    <button id="non-ai-toggle-btn" class="non-ai-toggle-btn">Non-AI mode</button>
   </div>
 
   <div class="search-container">
@@ -459,48 +464,98 @@
 <script>
   // --- Gestión del banner ---
   const banner = document.getElementById('warning-banner');
-  const closeBtn = document.getElementById('close-banner');
-  const nonAIToggle = document.getElementById('non-ai-toggle');
   const bannerText = document.getElementById('banner-text');
+  const ignoreBtn = document.getElementById('ignore-30d');
+  const hideBtn = document.getElementById('hide-session');
+  const nonAIBtn = document.getElementById('non-ai-toggle-btn');
 
-  // Cerrar banner (recordar preferencia)
-  closeBtn.addEventListener('click', () => {
-    banner.classList.add('hidden');
-    document.body.classList.add('banner-hidden');
-    localStorage.setItem('litepedia-banner-closed', 'true');
-  });
+  // Constantes para almacenamiento
+  const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
+  const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
-  // Comprobar si el banner fue cerrado anteriormente
-  if (localStorage.getItem('litepedia-banner-closed') === 'true') {
+  // Función para ocultar el banner (físicamente)
+  function hideBanner() {
     banner.classList.add('hidden');
     document.body.classList.add('banner-hidden');
   }
 
-  // Estado del modo Non-AI
-  let nonAIMode = false;
-
-  nonAIToggle.addEventListener('click', () => {
-    nonAIMode = !nonAIMode;
-    nonAIToggle.classList.toggle('active', nonAIMode);
-    nonAIToggle.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
-    
-    // Cambiar color del banner
-    if (nonAIMode) {
-      banner.classList.add('non-ai-active');
-      bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo de Wikipedia.';
-    } else {
-      banner.classList.remove('non-ai-active');
-      bannerText.textContent = 'When AI fails due to restrictions, use "Non-AI mode" to see the full article.';
+  // Función para mostrar el banner (si no está oculto por otras razones)
+  function showBannerIfNeeded() {
+    // Primero comprobar si hay un ignore de 30 días vigente
+    const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
+    if (ignoreUntil) {
+      const expiry = new Date(ignoreUntil);
+      if (expiry > new Date()) {
+        // Aún vigente, ocultar
+        hideBanner();
+        return;
+      } else {
+        // Expirado, limpiar
+        localStorage.removeItem(STORAGE_IGNORE);
+      }
     }
 
-    // Si hay una búsqueda activa, repetirla
+    // Si no hay ignore, comprobar ocultación de sesión
+    if (sessionStorage.getItem(SESSION_HIDE) === 'true') {
+      hideBanner();
+      return;
+    }
+
+    // Si no hay nada, mostrar (quitando clase hidden)
+    banner.classList.remove('hidden');
+    document.body.classList.remove('banner-hidden');
+  }
+
+  // Evento: Ignorar por 30 días
+  ignoreBtn.addEventListener('click', () => {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
+    // Limpiar posible sesión
+    sessionStorage.removeItem(SESSION_HIDE);
+    hideBanner();
+  });
+
+  // Evento: Ocultar (solo sesión)
+  hideBtn.addEventListener('click', () => {
+    // Si hay un ignore activo, no hacemos nada (prevalece)
+    const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
+    if (ignoreUntil) {
+      const expiry = new Date(ignoreUntil);
+      if (expiry > new Date()) {
+        // Ignore activo, no se puede ocultar por sesión
+        return;
+      }
+    }
+    sessionStorage.setItem(SESSION_HIDE, 'true');
+    hideBanner();
+  });
+
+  // --- Modo Non-AI (independiente) ---
+  let nonAIMode = false;
+
+  nonAIBtn.addEventListener('click', () => {
+    nonAIMode = !nonAIMode;
+    nonAIBtn.classList.toggle('active', nonAIMode);
+    nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
+
+    // Cambiar aspecto del banner (opcional)
+    if (nonAIMode) {
+      banner.classList.add('non-ai-active');
+      bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo.';
+    } else {
+      banner.classList.remove('non-ai-active');
+      bannerText.textContent = '⚠️ When AI fails, use "Non-AI mode" to see the full article.';
+    }
+
+    // Si hay una búsqueda activa, repetir
     const query = document.getElementById('search-input').value.trim();
     if (query) {
       executeSearch();
     }
   });
 
-  // --- Funciones de parseo y utilidades ---
+  // --- Funciones comunes ---
   function parseMarkdown(text) {
     return text
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -531,7 +586,7 @@
     document.body.classList.toggle('dark-mode');
   }
 
-  // --- Sugerencias (autocomplete) ---
+  // --- Sugerencias ---
   const searchInput = document.getElementById('search-input');
   const suggestionsBox = document.getElementById('suggestions-box');
   let debounceTimer;
@@ -552,7 +607,6 @@
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
-        
         const titles = data[1] || [];
         const descriptions = data[2] || [];
 
@@ -565,23 +619,18 @@
         titles.forEach((title, index) => {
           const li = document.createElement('li');
           li.className = 'suggestion-item';
-          
           const descText = descriptions[index] || 'Artículo de Wikipedia';
-          
           li.innerHTML = `
             <span class="suggestion-title">${title}</span>
             <span class="suggestion-desc">${descText}</span>
           `;
-
           li.addEventListener('click', () => {
             searchInput.value = title;
             suggestionsBox.classList.remove('visible');
             executeSearch();
           });
-
           suggestionsBox.appendChild(li);
         });
-
         suggestionsBox.classList.add('visible');
       } catch (err) {
         console.error('Error al obtener sugerencias:', err);
@@ -595,7 +644,7 @@
     }
   });
 
-  // --- Función para obtener imagen principal de Wikipedia ---
+  // --- Funciones para obtener imagen y contenido Non-AI ---
   async function fetchPageImage(title, lang) {
     try {
       const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
@@ -618,10 +667,8 @@
     }
   }
 
-  // --- Función para mostrar contenido Non-AI ---
   async function showNonAIResult(query, sourceLang) {
     showLoading();
-
     try {
       const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
       const wikiRes = await fetch(wikiUrl);
@@ -629,7 +676,6 @@
       const wikiData = await wikiRes.json();
       const pages = wikiData.query.pages;
       const page = Object.values(pages)[0];
-
       if (!page || page.missing) {
         throw new Error(`No se encontró el artículo "${query}" en Wikipedia (${sourceLang}).`);
       }
@@ -641,32 +687,26 @@
       const imageInfo = await fetchPageImage(query, sourceLang);
 
       let html = `<div class="non-ai-content">`;
-
       if (imageInfo) {
         html += `<div class="wiki-image">
           <img src="${imageInfo.url}" alt="Imagen del artículo" loading="lazy" />
           <div class="image-caption">Imagen de Wikipedia</div>
         </div>`;
       }
-
       let formattedExtract = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
         const parts = p1.split('|');
         const article = parts[0];
         const display = parts[1] || article;
         return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
       });
-
       formattedExtract = formattedExtract.replace(/\n/g, '<br>');
-
       html += `<div class="extract-text">${formattedExtract}</div>`;
       html += `<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;">
         📄 Texto completo del artículo de Wikipedia (${sourceLang}). 
         <a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(query)}" target="_blank" rel="noopener">Ver original</a>
       </p>`;
       html += `</div>`;
-
       showResult(html);
-
     } catch (err) {
       showError(err.message);
       console.error(err);
@@ -682,53 +722,12 @@
 
     if (!query) return;
 
-    // Modo Non-AI
     if (nonAIMode) {
       await showNonAIResult(query, sourceLang);
       return;
     }
 
-    // Modo IA (original)
+    // Modo IA
     showLoading();
-
     try {
-      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
-      const wikiRes = await fetch(wikiUrl);
-      if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
-      const wikiData = await wikiRes.json();
-      const pages = wikiData.query.pages;
-      const page = Object.values(pages)[0];
-
-      if (!page || page.missing) {
-        throw new Error(`No se encontró el artículo "${query}" en Wikipedia (${sourceLang}).`);
-      }
-      if (!page.extract) {
-        throw new Error('El artículo está vacío o no tiene contenido textual.');
-      }
-
-      const extract = page.extract.slice(0, 4000);
-
-      const aiPayload = {
-        model: 'google/gemma-4-26b-a4b-it:free',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres un asistente que resume artículos de Wikipedia. 
-              Responde SIEMPRE en el idioma solicitado (${targetLang}). 
-              Usa **negrita** para conceptos clave, *cursiva* para términos técnicos 
-              y __subrayado__ para advertencias o datos importantes.
-              El resumen debe ser claro, conciso y bien estructurado (máximo 3 párrafos).`
-          },
-          {
-            role: 'user',
-            content: `Artículo de Wikipedia (en ${sourceLang}):\n\n${extract}\n\n 
-              Haz un resumen en ${targetLang} siguiendo el formato indicado.`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 600
-      };
-
-      const aiRes = await fetch('/api/proxy', {
-        method: 'POST',
-        headers: { 'Content-
+      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encod
