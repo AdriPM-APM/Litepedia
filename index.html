@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Litepedia</title>
   <style>
+    /* (Los estilos son los mismos que antes, no los repito para ahorrar espacio) */
     :root {
       --bg: #ffffff;
       --text: #202122;
@@ -51,7 +52,6 @@
       padding-top: 40px;
     }
 
-    /* Banner compacto */
     .warning-banner {
       position: fixed;
       top: 0;
@@ -131,7 +131,6 @@
       color: #b33;
     }
 
-    /* Controles */
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -162,7 +161,6 @@
       cursor: pointer;
     }
 
-    /* Botón Non-AI independiente */
     .non-ai-toggle-btn {
       background: var(--accent);
       border: none;
@@ -187,7 +185,6 @@
       background: #c9302c;
     }
 
-    /* Resto de estilos */
     .app {
       max-width: 700px;
       width: 100%;
@@ -344,19 +341,6 @@
       margin-bottom: 1rem;
     }
 
-    #ai-output b {
-      color: var(--text);
-      font-weight: bold;
-    }
-
-    #ai-output u {
-      text-decoration: underline;
-    }
-
-    #ai-output i {
-      font-style: italic;
-    }
-
     .loading {
       color: var(--text-secondary);
       font-style: italic;
@@ -367,12 +351,11 @@
       font-weight: bold;
     }
 
-    .non-ai-content {
+    .non-ai-content, .ai-content {
       text-align: left;
     }
 
-    .non-ai-content .wiki-image,
-    .ai-content .wiki-image {
+    .wiki-image {
       float: right;
       margin: 0 0 12px 16px;
       max-width: 200px;
@@ -381,35 +364,30 @@
       background: var(--bg);
     }
 
-    .non-ai-content .wiki-image img,
-    .ai-content .wiki-image img {
+    .wiki-image img {
       width: 100%;
       height: auto;
       display: block;
     }
 
-    .non-ai-content .wiki-image .image-caption,
-    .ai-content .wiki-image .image-caption {
+    .wiki-image .image-caption {
       font-size: 0.75rem;
       color: var(--text-secondary);
       text-align: center;
       margin-top: 4px;
     }
 
-    .non-ai-content .extract-text,
-    .ai-content .extract-text {
+    .extract-text {
       white-space: pre-wrap;
       word-wrap: break-word;
     }
 
-    .non-ai-content .extract-text a,
-    .ai-content .extract-text a {
+    .extract-text a {
       color: var(--accent);
       text-decoration: none;
     }
 
-    .non-ai-content .extract-text a:hover,
-    .ai-content .extract-text a:hover {
+    .extract-text a:hover {
       text-decoration: underline;
     }
 
@@ -424,7 +402,7 @@
 </head>
 <body>
 
-<!-- BANNER COMPACTO CON ACCIONES -->
+<!-- BANNER -->
 <div id="warning-banner" class="warning-banner">
   <span class="banner-text" id="banner-text">
     ⚠️ Modo IA: resumen traducido. Usa "Non-AI mode" para ver el artículo completo.
@@ -442,7 +420,6 @@
     <div class="tagline">La enciclopedia resumida y libre</div>
   </header>
 
-  <!-- Controles con botón Non-AI independiente -->
   <div class="controls">
     <div class="control-group">
       <label for="source-lang-select">De:</label>
@@ -476,22 +453,32 @@
 </div>
 
 <script>
-  // --- Gestión del banner ---
+  // --- Elementos DOM ---
   const banner = document.getElementById('warning-banner');
   const bannerText = document.getElementById('banner-text');
   const ignoreBtn = document.getElementById('ignore-30d');
   const hideBtn = document.getElementById('hide-session');
   const nonAIBtn = document.getElementById('non-ai-toggle-btn');
+  const searchInput = document.getElementById('search-input');
+  const suggestionsBox = document.getElementById('suggestions-box');
+  const outputDiv = document.getElementById('ai-output');
 
+  // --- Constantes de almacenamiento ---
   const STORAGE_IGNORE = 'litepedia_banner_ignore_until';
   const SESSION_HIDE = 'litepedia_banner_session_hidden';
 
+  // --- Funciones del banner ---
   function hideBanner() {
     banner.classList.add('hidden');
     document.body.classList.add('banner-hidden');
   }
 
-  function showBannerIfNeeded() {
+  function showBanner() {
+    banner.classList.remove('hidden');
+    document.body.classList.remove('banner-hidden');
+  }
+
+  function updateBannerVisibility() {
     const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
     if (ignoreUntil) {
       const expiry = new Date(ignoreUntil);
@@ -502,46 +489,48 @@
         localStorage.removeItem(STORAGE_IGNORE);
       }
     }
-
     if (sessionStorage.getItem(SESSION_HIDE) === 'true') {
       hideBanner();
       return;
     }
-
-    banner.classList.remove('hidden');
-    document.body.classList.remove('banner-hidden');
+    showBanner();
   }
 
-  showBannerIfNeeded();
+  // Inicializar banner
+  updateBannerVisibility();
 
+  // Eventos de los botones
   ignoreBtn.addEventListener('click', () => {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
     localStorage.setItem(STORAGE_IGNORE, expiryDate.toISOString());
     sessionStorage.removeItem(SESSION_HIDE);
     hideBanner();
+    console.log('Banner ignorado por 30 días');
   });
 
   hideBtn.addEventListener('click', () => {
+    // Si hay un ignore activo, no hacemos nada (o podríamos permitir ocultar temporalmente)
     const ignoreUntil = localStorage.getItem(STORAGE_IGNORE);
     if (ignoreUntil) {
       const expiry = new Date(ignoreUntil);
       if (expiry > new Date()) {
-        return;
+        // Está en modo ignorar, pero el usuario quiere ocultar igualmente para esta sesión
+        // Eliminamos el ignore y ocultamos por sesión
+        localStorage.removeItem(STORAGE_IGNORE);
       }
     }
     sessionStorage.setItem(SESSION_HIDE, 'true');
     hideBanner();
+    console.log('Banner oculto para esta sesión');
   });
 
-  // --- Modo Non-AI (independiente) ---
+  // --- Modo Non-AI ---
   let nonAIMode = false;
 
-  nonAIBtn.addEventListener('click', () => {
-    nonAIMode = !nonAIMode;
+  function updateNonAIModeUI() {
     nonAIBtn.classList.toggle('active', nonAIMode);
     nonAIBtn.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
-
     if (nonAIMode) {
       banner.classList.add('non-ai-active');
       bannerText.textContent = '🔹 Modo Non-AI activado: mostrando artículo completo sin traducción.';
@@ -549,48 +538,53 @@
       banner.classList.remove('non-ai-active');
       bannerText.textContent = '⚡ Modo IA: resumen traducido del artículo.';
     }
+  }
 
-    const query = document.getElementById('search-input').value.trim();
+  nonAIBtn.addEventListener('click', () => {
+    nonAIMode = !nonAIMode;
+    updateNonAIModeUI();
+    // Si hay una búsqueda, la ejecutamos de nuevo
+    const query = searchInput.value.trim();
     if (query) {
       executeSearch();
     }
   });
 
-  // --- Funciones comunes ---
-  function parseMarkdown(text) {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-      .replace(/__(.*?)__/g, '<u>$1</u>')
-      .replace(/\*(.*?)\*/g, '<i>$1</i>')
-      .replace(/\n/g, '<br>');
-  }
-
-  function showLoading() {
-    const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = `<div class="loading">⏳ Cargando artículo...</div>`;
+  // --- Funciones de utilidad ---
+  function showLoading(msg = '⏳ Cargando artículo...') {
+    outputDiv.className = 'visible';
+    outputDiv.innerHTML = `<div class="loading">${msg}</div>`;
   }
 
   function showError(msg) {
-    const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = `<div class="error-msg">❌ Error: ${msg}</div>`;
+    outputDiv.className = 'visible';
+    outputDiv.innerHTML = `<div class="error-msg">❌ Error: ${msg}</div>`;
   }
 
   function showResult(html) {
-    const out = document.getElementById('ai-output');
-    out.className = 'visible';
-    out.innerHTML = html;
+    outputDiv.className = 'visible';
+    outputDiv.innerHTML = html;
   }
 
   function toggleTheme() {
     document.body.classList.toggle('dark-mode');
   }
 
-  // --- Sugerencias ---
-  const searchInput = document.getElementById('search-input');
-  const suggestionsBox = document.getElementById('suggestions-box');
+  // --- Sugerencias (autocompletado) ---
   let debounceTimer;
+
+  async function fetchSuggestions(query, lang) {
+    try {
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      return data; // [query, titles, descriptions, urls]
+    } catch (err) {
+      console.warn('Error al obtener sugerencias:', err);
+      return null;
+    }
+  }
 
   searchInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
@@ -603,42 +597,41 @@
     }
 
     debounceTimer = setTimeout(async () => {
-      try {
-        const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
-        const titles = data[1] || [];
-        const descriptions = data[2] || [];
-
-        if (titles.length === 0) {
-          suggestionsBox.classList.remove('visible');
-          return;
-        }
-
-        suggestionsBox.innerHTML = '';
-        titles.forEach((title, index) => {
-          const li = document.createElement('li');
-          li.className = 'suggestion-item';
-          const descText = descriptions[index] || 'Artículo de Wikipedia';
-          li.innerHTML = `
-            <span class="suggestion-title">${title}</span>
-            <span class="suggestion-desc">${descText}</span>
-          `;
-          li.addEventListener('click', () => {
-            searchInput.value = title;
-            suggestionsBox.classList.remove('visible');
-            executeSearch();
-          });
-          suggestionsBox.appendChild(li);
-        });
-        suggestionsBox.classList.add('visible');
-      } catch (err) {
-        console.error('Error al obtener sugerencias:', err);
+      const data = await fetchSuggestions(query, sourceLang);
+      if (!data) {
+        // No mostrar nada, pero podríamos mostrar un mensaje de error opcional
+        suggestionsBox.classList.remove('visible');
+        return;
       }
+      const titles = data[1] || [];
+      const descriptions = data[2] || [];
+
+      if (titles.length === 0) {
+        suggestionsBox.classList.remove('visible');
+        return;
+      }
+
+      suggestionsBox.innerHTML = '';
+      titles.forEach((title, index) => {
+        const li = document.createElement('li');
+        li.className = 'suggestion-item';
+        const descText = descriptions[index] || 'Artículo de Wikipedia';
+        li.innerHTML = `
+          <span class="suggestion-title">${title}</span>
+          <span class="suggestion-desc">${descText}</span>
+        `;
+        li.addEventListener('click', () => {
+          searchInput.value = title;
+          suggestionsBox.classList.remove('visible');
+          executeSearch();
+        });
+        suggestionsBox.appendChild(li);
+      });
+      suggestionsBox.classList.add('visible');
     }, 300);
   });
 
+  // Cerrar sugerencias al hacer clic fuera
   document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
       suggestionsBox.classList.remove('visible');
@@ -653,7 +646,7 @@
     }
   });
 
-  // --- Funciones para obtener imagen y contenido ---
+  // --- Funciones de Wikipedia y traducción ---
   async function fetchPageImage(title, lang) {
     try {
       const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
@@ -671,12 +664,11 @@
       }
       return null;
     } catch (e) {
-      console.warn('Error fetching image:', e);
+      console.warn('Error al obtener imagen:', e);
       return null;
     }
   }
 
-  // Obtener extracto de Wikipedia
   async function fetchExtract(title, lang) {
     const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(title)}&origin=*&format=json`;
     const res = await fetch(url);
@@ -693,7 +685,6 @@
     return page.extract;
   }
 
-  // Traducir texto con MyMemory
   async function translateText(text, sourceLang, targetLang) {
     if (sourceLang === targetLang) return text;
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
@@ -707,8 +698,17 @@
     }
   }
 
-  // Mostrar artículo (modo IA o Non-AI)
-  function displayArticle(title, extract, imageInfo, sourceLang, targetLang, isNonAI) {
+  function formatExtract(text, lang) {
+    // Convertir enlaces [[Artículo|texto]] a <a>
+    return text.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
+      const parts = p1.split('|');
+      const article = parts[0];
+      const display = parts[1] || article;
+      return `<a href="https://${lang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
+    }).replace(/\n/g, '<br>');
+  }
+
+  function buildArticleHTML(title, extract, imageInfo, sourceLang, targetLang, isNonAI) {
     let html = `<div class="${isNonAI ? 'non-ai-content' : 'ai-content'}">`;
     if (imageInfo) {
       html += `<div class="wiki-image">
@@ -716,22 +716,14 @@
         <div class="image-caption">Imagen de Wikipedia</div>
       </div>`;
     }
-    // Formatear enlaces [[Artículo|texto]] -> <a href="...">
-    let formatted = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
-      const parts = p1.split('|');
-      const article = parts[0];
-      const display = parts[1] || article;
-      return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
-    });
-    formatted = formatted.replace(/\n/g, '<br>');
+    const formatted = formatExtract(extract, sourceLang);
     html += `<div class="extract-text">${formatted}</div>`;
 
     if (isNonAI) {
       html += `<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;">
-        📄 Texto completo del artículo de Wikipedia (${sourceLang}). 
+        📄 Texto completo del artículo de Wikipedia (${sourceLang.toUpperCase()}). 
         <a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(title)}" target="_blank" rel="noopener">Ver original</a>
       </p>`;
     } else {
       const note = sourceLang !== targetLang
-        ? `Traducido automáticamente de ${sourceLang.toUpperCase()} a ${targetLang.toUpperCase()}`
-        : `Resumen del artículo en ${sourc
+        
