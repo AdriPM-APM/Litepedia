@@ -14,6 +14,8 @@
       --accent-hover: #2a4b8d;
       --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Lato, Helvetica, Arial, sans-serif;
       --font-serif: 'Linux Libertine', Georgia, Times, serif;
+      --warning-bg: #ffeedb;
+      --warning-text: #6b4c1e;
     }
 
     body.dark-mode {
@@ -22,6 +24,8 @@
       --text-secondary: #c8ccd1;
       --border: #72777d;
       --accent: #6996e3;
+      --warning-bg: #2a2416;
+      --warning-text: #e6c68a;
     }
 
     * {
@@ -39,6 +43,57 @@
       flex-direction: column;
       align-items: center;
       padding: 40px 20px;
+      padding-top: 100px; /* espacio para el banner fijo */
+    }
+
+    /* Banner de advertencia fijo */
+    .warning-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      border-bottom: 2px solid #d4a54a;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .warning-banner .warning-text {
+      font-weight: 500;
+    }
+
+    .warning-banner .non-ai-toggle {
+      background: #d4a54a;
+      border: none;
+      color: #1f1a0e;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .warning-banner .non-ai-toggle:hover {
+      background: #b8923a;
+    }
+
+    .warning-banner .non-ai-toggle.active {
+      background: #b33;
+      color: #fff;
+    }
+
+    .warning-banner .non-ai-toggle.active:hover {
+      background: #922;
     }
 
     .app {
@@ -247,9 +302,58 @@
       color: #d33;
       font-weight: bold;
     }
+
+    /* Estilos para el modo Non‑AI */
+    .non-ai-content {
+      text-align: left;
+    }
+
+    .non-ai-content .wiki-image {
+      float: right;
+      margin: 0 0 12px 16px;
+      max-width: 200px;
+      border: 1px solid var(--border);
+      padding: 4px;
+      background: var(--bg);
+    }
+
+    .non-ai-content .wiki-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .non-ai-content .wiki-image .image-caption {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .non-ai-content .extract-text {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .non-ai-content .extract-text a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .non-ai-content .extract-text a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+
+<!-- BANNER DE ADVERTENCIA -->
+<div id="warning-banner" class="warning-banner">
+  <span class="warning-text">
+    ⚠️ When AI falls down and goes on a crisis due to AI restrictions to prevent further damage, use the button of "Non-AI mode".
+  </span>
+  <button id="non-ai-toggle" class="non-ai-toggle">Non-AI mode</button>
+</div>
 
 <div class="app">
   <header class="header">
@@ -290,8 +394,22 @@
 </div>
 
 <script>
-  let debounceTimer;
+  // --- Estado del modo Non-AI ---
+  let nonAIMode = false;
+  const nonAIToggle = document.getElementById('non-ai-toggle');
 
+  nonAIToggle.addEventListener('click', () => {
+    nonAIMode = !nonAIMode;
+    nonAIToggle.classList.toggle('active', nonAIMode);
+    nonAIToggle.textContent = nonAIMode ? 'Non-AI (ON)' : 'Non-AI mode';
+    // Si hay una búsqueda ya hecha, la repetimos en el nuevo modo
+    const query = document.getElementById('search-input').value.trim();
+    if (query) {
+      executeSearch();
+    }
+  });
+
+  // --- Funciones de parseo y utilidades ---
   function parseMarkdown(text) {
     return text
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
@@ -322,8 +440,10 @@
     document.body.classList.toggle('dark-mode');
   }
 
+  // --- Sugerencias (autocomplete) ---
   const searchInput = document.getElementById('search-input');
   const suggestionsBox = document.getElementById('suggestions-box');
+  let debounceTimer;
 
   searchInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
@@ -384,6 +504,94 @@
     }
   });
 
+  // --- Función para obtener imagen principal de Wikipedia ---
+  async function fetchPageImage(title, lang) {
+    try {
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const pages = data.query.pages;
+      const page = Object.values(pages)[0];
+      if (page && page.thumbnail) {
+        return {
+          url: page.thumbnail.source,
+          width: page.thumbnail.width,
+          height: page.thumbnail.height
+        };
+      }
+      return null;
+    } catch (e) {
+      console.warn('Error fetching image:', e);
+      return null;
+    }
+  }
+
+  // --- Función para mostrar contenido Non-AI ---
+  async function showNonAIResult(query, sourceLang) {
+    showLoading();
+
+    try {
+      // Obtener extracto
+      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
+      const wikiRes = await fetch(wikiUrl);
+      if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
+      const wikiData = await wikiRes.json();
+      const pages = wikiData.query.pages;
+      const page = Object.values(pages)[0];
+
+      if (!page || page.missing) {
+        throw new Error(`No se encontró el artículo "${query}" en Wikipedia (${sourceLang}).`);
+      }
+      if (!page.extract) {
+        throw new Error('El artículo está vacío o no tiene contenido textual.');
+      }
+
+      const extract = page.extract;
+      // Obtener imagen
+      const imageInfo = await fetchPageImage(query, sourceLang);
+
+      // Construir HTML
+      let html = `<div class="non-ai-content">`;
+
+      // Imagen si existe
+      if (imageInfo) {
+        html += `<div class="wiki-image">
+          <img src="${imageInfo.url}" alt="Imagen del artículo" loading="lazy" />
+          <div class="image-caption">Imagen de Wikipedia</div>
+        </div>`;
+      }
+
+      // Texto del extracto (convertir enlaces wiki a enlaces HTML básicos)
+      // Los enlaces en Wikipedia son [[texto]] o [[Artículo|texto]]
+      let formattedExtract = extract.replace(/\[\[([^\]|]*?)\]\]/g, (match, p1) => {
+        // Si hay pipe, el primer es el artículo, el segundo el texto mostrado
+        const parts = p1.split('|');
+        const article = parts[0];
+        const display = parts[1] || article;
+        // Generamos un enlace a la página de Wikipedia en el idioma original
+        return `<a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(article)}" target="_blank" rel="noopener">${display}</a>`;
+      });
+
+      // Reemplazar saltos de línea por <br> y preservar espacios
+      formattedExtract = formattedExtract.replace(/\n/g, '<br>');
+
+      html += `<div class="extract-text">${formattedExtract}</div>`;
+      html += `<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;">
+        📄 Texto completo del artículo de Wikipedia (${sourceLang}). 
+        <a href="https://${sourceLang}.wikipedia.org/wiki/${encodeURIComponent(query)}" target="_blank" rel="noopener">Ver original</a>
+      </p>`;
+      html += `</div>`;
+
+      showResult(html);
+
+    } catch (err) {
+      showError(err.message);
+      console.error(err);
+    }
+  }
+
+  // --- Función principal de búsqueda ---
   async function executeSearch() {
     suggestionsBox.classList.remove('visible');
     const query = searchInput.value.trim();
@@ -392,11 +600,17 @@
 
     if (!query) return;
 
+    // Si estamos en modo Non-AI, mostrar directamente el contenido de Wikipedia
+    if (nonAIMode) {
+      await showNonAIResult(query, sourceLang);
+      return;
+    }
+
+    // Modo IA (original)
     showLoading();
 
     try {
-      const wikiUrl =
-        `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
+      const wikiUrl = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(query)}&origin=*&format=json`;
       const wikiRes = await fetch(wikiUrl);
       if (!wikiRes.ok) throw new Error('Error al conectar con Wikipedia');
       const wikiData = await wikiRes.json();
@@ -464,6 +678,7 @@
     if (e.key === 'Enter') executeSearch();
   });
 
+  // Modo oscuro automático
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.body.classList.add('dark-mode');
   }
@@ -471,4 +686,3 @@
 
 </body>
   </html>
-      
